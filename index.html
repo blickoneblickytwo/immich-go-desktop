@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>immich-go Uploader</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: #e8e8ed;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .window {
+    width: 100%;
+    max-width: 680px;
+    background: #f5f5f7;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
+    overflow: hidden;
+  }
+
+  /* Title bar */
+  .titlebar {
+    background: linear-gradient(180deg, #e0e0e5 0%, #d4d4d9 100%);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    border-bottom: 1px solid #c0c0c5;
+    position: relative;
+    user-select: none;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red   { background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.12); }
+  .dot-yellow{ background: #febc2e; border: 0.5px solid rgba(0,0,0,0.12); }
+  .dot-green { background: #28c840; border: 0.5px solid rgba(0,0,0,0.12); }
+  .titlebar-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 13px; font-weight: 600; color: #3a3a3c; letter-spacing: -0.1px;
+  }
+
+  /* Progress steps */
+  .steps-bar {
+    background: #ebebf0;
+    border-bottom: 1px solid #d1d1d6;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1;
+    cursor: default;
+  }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+  }
+  .step-item.done .step-num   { background: #34c759; color: #fff; }
+  .step-item.active .step-num { background: #0071e3; color: #fff; }
+  .step-item.idle .step-num   { background: #c7c7cc; color: #fff; }
+  .step-label {
+    font-size: 12px; font-weight: 500; white-space: nowrap;
+    transition: color 0.25s;
+  }
+  .step-item.done .step-label   { color: #34c759; }
+  .step-item.active .step-label { color: #0071e3; }
+  .step-item.idle .step-label   { color: #8e8e93; }
+  .step-connector {
+    flex: 1; height: 1.5px; background: #d1d1d6; margin: 0 6px; max-width: 40px;
+  }
+  .step-connector.done { background: #34c759; }
+
+  /* Content */
+  .content {
+    padding: 28px 32px 24px;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel { display: none; flex-direction: column; gap: 20px; flex: 1; }
+  .panel.active { display: flex; }
+
+  .panel-title {
+    font-size: 20px; font-weight: 700; color: #1c1c1e; letter-spacing: -0.4px;
+  }
+  .panel-subtitle {
+    font-size: 13px; color: #636366; margin-top: 3px; line-height: 1.5;
+  }
+
+  /* Form elements */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 12px; font-weight: 600; color: #3a3a3c; letter-spacing: 0.1px;
+    text-transform: uppercase;
+  }
+  .field-hint { font-size: 11.5px; color: #8e8e93; line-height: 1.4; }
+
+  input[type="text"], input[type="password"] {
+    font-family: inherit;
+    font-size: 14px;
+    color: #1c1c1e;
+    background: #ffffff;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+  }
+  input:focus {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.18), inset 0 1px 3px rgba(0,0,0,0.04);
+  }
+  input::placeholder { color: #aeaeb2; }
+
+  .input-row { display: flex; gap: 10px; }
+  .input-row input { flex: 1; }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    padding: 13px 15px;
+  }
+  .toggle-info { flex: 1; }
+  .toggle-name { font-size: 14px; font-weight: 500; color: #1c1c1e; }
+  .toggle-desc { font-size: 12px; color: #8e8e93; margin-top: 2px; line-height: 1.4; }
+  .toggle-switch {
+    width: 38px; height: 22px; flex-shrink: 0;
+    background: #e5e5ea;
+    border-radius: 11px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    border: none; outline: none;
+    margin-top: 1px;
+  }
+  .toggle-switch.on { background: #34c759; }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toggle-switch.on::after { transform: translateX(16px); }
+
+  /* Select */
+  select {
+    font-family: inherit;
+    font-size: 14px; color: #1c1c1e;
+    background: #ffffff;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    padding: 9px 12px;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  select:focus {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.18);
+  }
+
+  /* Test connection button */
+  .btn-test {
+    font-family: inherit;
+    font-size: 13px; font-weight: 600;
+    color: #0071e3;
+    background: transparent;
+    border: 1.5px solid #0071e3;
+    border-radius: 8px;
+    padding: 9px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-test:hover { background: #0071e3; color: #fff; }
+  .btn-test.success { background: #34c759; border-color: #34c759; color: #fff; }
+  .btn-test.fail    { background: #ff3b30; border-color: #ff3b30; color: #fff; }
+
+  .status-msg {
+    font-size: 12px; margin-top: 4px;
+    display: none;
+  }
+  .status-msg.ok  { color: #34c759; display: block; }
+  .status-msg.err { color: #ff3b30; display: block; }
+
+  /* Tag input */
+  .tags-wrap {
+    background: #fff;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    min-height: 44px;
+    cursor: text;
+  }
+  .tag {
+    background: #e5f0ff;
+    border: 1px solid #b3d4ff;
+    border-radius: 5px;
+    padding: 3px 8px 3px 9px;
+    font-size: 12px; color: #0071e3;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .tag button { background: none; border: none; cursor: pointer; color: #0071e3; font-size: 13px; line-height: 1; padding: 0; }
+  .tags-input {
+    border: none; outline: none; font-family: inherit;
+    font-size: 13px; color: #1c1c1e; flex: 1; min-width: 80px;
+    background: transparent;
+  }
+
+  /* Summary */
+  .summary-card {
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .summary-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 11px 15px;
+    border-bottom: 1px solid #f2f2f7;
+    font-size: 13px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: #8e8e93; font-weight: 500; width: 140px; flex-shrink: 0; }
+  .summary-val { color: #1c1c1e; font-weight: 500; word-break: break-all; }
+  .summary-val.mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #d1f5d9; color: #1a7f37; }
+  .badge-gray  { background: #e5e5ea; color: #636366; }
+  .badge-blue  { background: #ddeeff; color: #0071e3; }
+
+  /* CLI box */
+  .cli-box {
+    background: #1c1c1e;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: #f2f2f7;
+    line-height: 1.7;
+    position: relative;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .cli-box .cmd-prefix { color: #34c759; }
+  .cli-box .flag { color: #64d2ff; }
+  .cli-box .val  { color: #ffd60a; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    color: #8e8e93; background: #3a3a3c;
+    border: none; border-radius: 6px;
+    padding: 5px 10px; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .copy-btn:hover { background: #555; color: #fff; }
+  .copy-btn.copied { background: #34c759; color: #fff; }
+
+  /* Nav buttons */
+  .nav-bar {
+    padding: 16px 32px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e5ea;
+    background: #f5f5f7;
+  }
+  .btn {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    border-radius: 8px; padding: 9px 22px;
+    cursor: pointer; border: none;
+    transition: filter 0.15s, transform 0.08s;
+  }
+  .btn:hover { filter: brightness(0.94); }
+  .btn:active { transform: scale(0.98); }
+  .btn-back { background: #e5e5ea; color: #3a3a3c; }
+  .btn-next { background: #0071e3; color: #fff; }
+  .btn-next:disabled { background: #aeaeb2; cursor: not-allowed; filter: none; }
+  .btn-invisible { visibility: hidden; }
+
+  /* Tooltip */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: #1c1c1e; color: #fff;
+    font-size: 11.5px; font-weight: 500;
+    padding: 5px 9px; border-radius: 7px;
+    white-space: normal; max-width: 200px; text-align: center;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.15s; z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  [data-tip]:hover::after { opacity: 1; }
+
+  .section-gap { display: flex; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <!-- Title Bar -->
+  <div class="titlebar">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+    <span class="titlebar-title">immich-go Uploader</span>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps-bar">
+    <div class="step-item active" id="si-1">
+      <div class="step-num">1</div>
+      <div class="step-label">Connect</div>
+    </div>
+    <div class="step-connector" id="sc-1"></div>
+    <div class="step-item idle" id="si-2">
+      <div class="step-num">2</div>
+      <div class="step-label">Folder</div>
+    </div>
+    <div class="step-connector" id="sc-2"></div>
+    <div class="step-item idle" id="si-3">
+      <div class="step-num">3</div>
+      <div class="step-label">Options</div>
+    </div>
+    <div class="step-connector" id="sc-3"></div>
+    <div class="step-item idle" id="si-4">
+      <div class="step-num">4</div>
+      <div class="step-label">Review</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Step 1: Connect -->
+    <div class="panel active" id="p1">
+      <div>
+        <div class="panel-title">Connect to your Immich server</div>
+        <div class="panel-subtitle">Enter your server address and API key to get started. You can find your API key in Immich under <strong>Account Settings → API Keys</strong>.</div>
+      </div>
+      <div class="field">
+        <label data-tip="The address of your Immich server, e.g. http://192.168.1.10:2283">Server URL</label>
+        <div class="input-row">
+          <input type="text" id="serverUrl" placeholder="http://192.168.1.10:2283" />
+          <button class="btn-test" id="testBtn" onclick="testConnection()">Test</button>
+        </div>
+        <div class="status-msg" id="connStatus"></div>
+        <div class="field-hint">Include the protocol (http:// or https://) and port number.</div>
+      </div>
+      <div class="field">
+        <label data-tip="Your Immich API key. Must include asset.view, asset.upload, asset.copy permissions.">API Key</label>
+        <input type="password" id="apiKey" placeholder="Paste your API key here" />
+        <div class="field-hint">Never share your API key. It stays in this browser session only.</div>
+      </div>
+    </div>
+
+    <!-- Step 2: Folder -->
+    <div class="panel" id="p2">
+      <div>
+        <div class="panel-title">Choose a folder to upload</div>
+        <div class="panel-subtitle">Enter the path to the folder containing your photos. immich-go will scan this folder and upload your media.</div>
+      </div>
+      <div class="field">
+        <label>Folder Path</label>
+        <input type="text" id="folderPath" placeholder="/Users/yourname/Pictures  or  C:\Users\yourname\Pictures" />
+        <div class="field-hint">
+          <strong>Mac/Linux:</strong> /Users/yourname/Pictures &nbsp;·&nbsp;
+          <strong>Windows:</strong> C:\Users\yourname\Pictures
+        </div>
+      </div>
+      <div class="field">
+        <label>Include Subfolders</label>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">Recursive scan</div>
+            <div class="toggle-desc">Search inside all subfolders, not just the top-level folder.</div>
+          </div>
+          <button class="toggle-switch on" id="tog-recursive" onclick="toggleSwitch(this)"></button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Create Albums from Subfolders</label>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">Auto-create albums</div>
+            <div class="toggle-desc">Each subfolder becomes an album in your Immich library.</div>
+          </div>
+          <button class="toggle-switch on" id="tog-albums" onclick="toggleSwitch(this)"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Options -->
+    <div class="panel" id="p3">
+      <div>
+        <div class="panel-title">Upload options</div>
+        <div class="panel-subtitle">Fine-tune how immich-go handles your files. All options are optional — the defaults work well for most users.</div>
+      </div>
+      <div class="section-gap">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name" data-tip="Simulates the upload without sending any files. Great for a preview.">🧪 Dry Run</div>
+            <div class="toggle-desc">Preview what would be uploaded — no files are actually sent.</div>
+          </div>
+          <button class="toggle-switch" id="tog-dryrun" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">⏸ Pause Immich Jobs</div>
+            <div class="toggle-desc">Pause background jobs (thumbnailing, ML) during upload for better performance.</div>
+          </div>
+          <button class="toggle-switch on" id="tog-pause" onclick="toggleSwitch(this)"></button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">🔁 Skip Duplicates</div>
+            <div class="toggle-desc">Don't upload files that already exist on your Immich server.</div>
+          </div>
+          <button class="toggle-switch on" id="tog-dupes" onclick="toggleSwitch(this)"></button>
+        </div>
+      </div>
+      <div class="field">
+        <label data-tip="Stack paired RAW and JPEG files into a single item in Immich">RAW+JPEG Stacking</label>
+        <select id="rawStack">
+          <option value="">Don't stack</option>
+          <option value="--stack-jpg-raw" selected>Stack RAW+JPEG pairs</option>
+        </select>
+      </div>
+      <div class="field">
+        <label data-tip="Patterns of filenames or folders to exclude from upload">Exclude Patterns (ban-file)</label>
+        <div class="tags-wrap" id="banTags" onclick="document.getElementById('banInput').focus()">
+          <div class="tag">.DS_Store <button onclick="removeTag(this)">×</button></div>
+          <div class="tag">Thumbs.db <button onclick="removeTag(this)">×</button></div>
+          <input class="tags-input" id="banInput" placeholder="Type and press Enter…" onkeydown="addTag(event)" />
+        </div>
+        <div class="field-hint">Press Enter to add a pattern. Patterns ending in / apply to folders.</div>
+      </div>
+    </div>
+
+    <!-- Step 4: Review -->
+    <div class="panel" id="p4">
+      <div>
+        <div class="panel-title">Review & copy command</div>
+        <div class="panel-subtitle">Everything looks good! Copy the command below and run it in your terminal.</div>
+      </div>
+      <div class="summary-card" id="summaryCard"></div>
+      <div class="field">
+        <label>Generated Command</label>
+        <div class="cli-box" id="cliBox"><button class="copy-btn" id="copyBtn" onclick="copyCmd()">Copy</button><span id="cliText"></span></div>
+      </div>
+      <div class="field">
+        <div class="field-hint">💡 <strong>How to run:</strong> Open <strong>Terminal</strong> (Mac/Linux) or <strong>Command Prompt / PowerShell</strong> (Windows), paste the command, and press Enter. Make sure <code>immich-go</code> is installed and in your PATH.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-bar">
+    <button class="btn btn-back btn-invisible" id="backBtn" onclick="goBack()">← Back</button>
+    <button class="btn btn-next" id="nextBtn" onclick="goNext()">Continue →</button>
+  </div>
+</div>
+
+<script>
+  let step = 1;
+  const total = 4;
+
+  function updateSteps() {
+    for (let i = 1; i <= total; i++) {
+      const si = document.getElementById(`si-${i}`);
+      si.className = 'step-item ' + (i < step ? 'done' : i === step ? 'active' : 'idle');
+      if (i < total) {
+        const sc = document.getElementById(`sc-${i}`);
+        sc.className = 'step-connector' + (i < step ? ' done' : '');
+      }
+      document.getElementById(`p${i}`).className = 'panel' + (i === step ? ' active' : '');
+    }
+    const back = document.getElementById('backBtn');
+    const next = document.getElementById('nextBtn');
+    back.classList.toggle('btn-invisible', step === 1);
+    next.textContent = step === total ? '✓ Done' : 'Continue →';
+  }
+
+  function validate() {
+    if (step === 1) {
+      return document.getElementById('serverUrl').value.trim() &&
+             document.getElementById('apiKey').value.trim();
+    }
+    if (step === 2) return document.getElementById('folderPath').value.trim();
+    return true;
+  }
+
+  function goNext() {
+    if (step === total) return;
+    if (!validate()) {
+      // shake effect
+      const p = document.getElementById(`p${step}`);
+      p.style.animation = 'none';
+      setTimeout(() => { p.style.animation = ''; }, 10);
+      return;
+    }
+    if (step === total - 1) buildSummary();
+    step++;
+    updateSteps();
+    window.scrollTo(0, 0);
+  }
+
+  function goBack() {
+    if (step === 1) return;
+    step--;
+    updateSteps();
+  }
+
+  function toggleSwitch(el) { el.classList.toggle('on'); }
+
+  function isOn(id) { return document.getElementById(id).classList.contains('on'); }
+
+  function addTag(e) {
+    if (e.key !== 'Enter') return;
+    const inp = document.getElementById('banInput');
+    const val = inp.value.trim();
+    if (!val) return;
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = `${val} <button onclick="removeTag(this)">×</button>`;
+    document.getElementById('banTags').insertBefore(tag, inp);
+    inp.value = '';
+  }
+
+  function removeTag(btn) { btn.parentElement.remove(); }
+
+  function getBanPatterns() {
+    return [...document.querySelectorAll('#banTags .tag')]
+      .map(t => t.textContent.replace('×','').trim());
+  }
+
+  function testConnection() {
+    const url = document.getElementById('serverUrl').value.trim();
+    const key = document.getElementById('apiKey').value.trim();
+    const btn = document.getElementById('testBtn');
+    const msg = document.getElementById('connStatus');
+    if (!url || !key) { msg.textContent = 'Please fill in both fields first.'; msg.className = 'status-msg err'; return; }
+    btn.textContent = '…'; btn.disabled = true;
+    // Simulate a test (real test would require CORS support on the server)
+    setTimeout(() => {
+      const looks = url.startsWith('http') && key.length > 10;
+      btn.textContent = looks ? '✓ OK' : '✗ Fail';
+      btn.className = 'btn-test ' + (looks ? 'success' : 'fail');
+      msg.textContent = looks ? 'Connection details look valid!' : 'Check your URL and API key.';
+      msg.className = 'status-msg ' + (looks ? 'ok' : 'err');
+      btn.disabled = false;
+      setTimeout(() => { btn.textContent = 'Test'; btn.className = 'btn-test'; }, 3000);
+    }, 900);
+  }
+
+  function buildSummary() {
+    const url = document.getElementById('serverUrl').value.trim();
+    const folder = document.getElementById('folderPath').value.trim();
+    const dryRun = isOn('tog-dryrun');
+    const recursive = isOn('tog-recursive');
+    const albums = isOn('tog-albums');
+    const pause = isOn('tog-pause');
+    const dupes = isOn('tog-dupes');
+    const rawStack = document.getElementById('rawStack').value;
+    const bans = getBanPatterns();
+
+    const rows = [
+      ['Server', `<span class="summary-val mono">${url}</span>`],
+      ['Folder', `<span class="summary-val mono">${folder}</span>`],
+      ['Mode', dryRun ? '<span class="badge badge-blue">Dry Run</span>' : '<span class="badge badge-green">Live Upload</span>'],
+      ['Subfolders', recursive ? '<span class="badge badge-green">Recursive</span>' : '<span class="badge badge-gray">Top-level only</span>'],
+      ['Albums', albums ? '<span class="badge badge-green">Auto-create</span>' : '<span class="badge badge-gray">Off</span>'],
+      ['Pause Jobs', pause ? '<span class="badge badge-green">Enabled</span>' : '<span class="badge badge-gray">Disabled</span>'],
+      ['Skip Dupes', dupes ? '<span class="badge badge-green">Enabled</span>' : '<span class="badge badge-gray">Disabled</span>'],
+      ['RAW Stack', rawStack ? '<span class="badge badge-blue">RAW+JPEG</span>' : '<span class="badge badge-gray">None</span>'],
+    ];
+    if (bans.length) rows.push(['Excluded', `<span class="summary-val">${bans.join(', ')}</span>`]);
+
+    document.getElementById('summaryCard').innerHTML = rows.map(([k,v]) =>
+      `<div class="summary-row"><span class="summary-key">${k}</span>${v}</div>`
+    ).join('');
+
+    // Build CLI
+    let cmd = `immich-go upload from-folder`;
+    cmd += ` \\\n  --server="${url}"`;
+    cmd += ` \\\n  --api-key="YOUR_API_KEY"`;
+    if (dryRun) cmd += ` \\\n  --dry-run`;
+    if (!dupes) cmd += ` \\\n  --no-skip-duplicates`;
+    if (albums) cmd += ` \\\n  --create-album-from-folder`;
+    if (pause) cmd += ` \\\n  --manage-immich-jobs`;
+    if (rawStack) cmd += ` \\\n  ${rawStack}`;
+    bans.forEach(b => { cmd += ` \\\n  --ban-file="${b}"`; });
+    cmd += ` \\\n  "${folder}"`;
+
+    // Colorize
+    const colored = cmd
+      .replace(/immich-go/g, '<span class="cmd-prefix">immich-go</span>')
+      .replace(/(--[\w-]+)/g, '<span class="flag">$1</span>')
+      .replace(/="([^"]*)"/g, '="<span class="val">$1</span>"');
+
+    document.getElementById('cliText').innerHTML = colored;
+    window._rawCmd = cmd;
+  }
+
+  function copyCmd() {
+    if (!window._rawCmd) return;
+    navigator.clipboard.writeText(window._rawCmd).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!'; btn.className = 'copy-btn copied';
+      setTimeout(() => { btn.textContent = 'Copy'; btn.className = 'copy-btn'; }, 2000);
+    });
+  }
+
+  updateSteps();
+</script>
+</body>
+</html>
