@@ -1,658 +1,763 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>immich-go Uploader</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Immich-Go Desktop</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --bg: #e8e8ed;
+    --window: #f5f5f7;
+    --line: #d1d1d6;
+    --text: #1c1c1e;
+    --muted: #636366;
+    --blue: #0071e3;
+    --green: #34c759;
+    --red: #ff3b30;
+    --chip: #ebebf0;
+  }
+
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-    background: #e8e8ed;
+    background: var(--bg);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 20px;
+    color: var(--text);
   }
 
   .window {
     width: 100%;
-    max-width: 680px;
-    background: #f5f5f7;
+    max-width: 760px;
+    background: var(--window);
     border-radius: 14px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
     overflow: hidden;
   }
 
-  /* Title bar */
   .titlebar {
     background: linear-gradient(180deg, #e0e0e5 0%, #d4d4d9 100%);
     height: 44px;
     display: flex;
     align-items: center;
-    padding: 0 16px;
     gap: 8px;
+    padding: 0 16px;
     border-bottom: 1px solid #c0c0c5;
     position: relative;
     user-select: none;
   }
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .dot-red   { background: #ff5f57; border: 0.5px solid rgba(0,0,0,0.12); }
-  .dot-yellow{ background: #febc2e; border: 0.5px solid rgba(0,0,0,0.12); }
-  .dot-green { background: #28c840; border: 0.5px solid rgba(0,0,0,0.12); }
-  .titlebar-title {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    font-size: 13px; font-weight: 600; color: #3a3a3c; letter-spacing: -0.1px;
+
+  .dot { width: 12px; height: 12px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.14); }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+
+  .title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    font-weight: 600;
+    color: #3a3a3c;
+    white-space: nowrap;
   }
 
-  /* Progress steps */
-  .steps-bar {
-    background: #ebebf0;
-    border-bottom: 1px solid #d1d1d6;
-    padding: 14px 24px;
+  .steps {
+    background: var(--chip);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 18px;
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: 8px;
+    flex-wrap: wrap;
   }
-  .step-item {
-    display: flex;
+
+  .step-chip {
+    display: inline-flex;
     align-items: center;
-    gap: 7px;
-    flex: 1;
-    cursor: default;
+    gap: 6px;
+    background: #dcdce2;
+    color: #5d5d63;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
   }
-  .step-num {
-    width: 22px; height: 22px;
+
+  .step-chip.active {
+    background: #ddeeff;
+    color: var(--blue);
+  }
+
+  .step-chip.done {
+    background: #d8f4df;
+    color: #1f7f3a;
+  }
+
+  .step-dot {
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
-    transition: all 0.25s ease;
-    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    background: #b9bbc3;
+    color: #fff;
   }
-  .step-item.done .step-num   { background: #34c759; color: #fff; }
-  .step-item.active .step-num { background: #0071e3; color: #fff; }
-  .step-item.idle .step-num   { background: #c7c7cc; color: #fff; }
-  .step-label {
-    font-size: 12px; font-weight: 500; white-space: nowrap;
-    transition: color 0.25s;
-  }
-  .step-item.done .step-label   { color: #34c759; }
-  .step-item.active .step-label { color: #0071e3; }
-  .step-item.idle .step-label   { color: #8e8e93; }
-  .step-connector {
-    flex: 1; height: 1.5px; background: #d1d1d6; margin: 0 6px; max-width: 40px;
-  }
-  .step-connector.done { background: #34c759; }
 
-  /* Content */
+  .step-chip.active .step-dot { background: var(--blue); }
+  .step-chip.done .step-dot { background: var(--green); }
+
   .content {
-    padding: 28px 32px 24px;
-    min-height: 340px;
-    display: flex;
-    flex-direction: column;
+    padding: 22px 24px 18px;
+    min-height: 420px;
   }
 
-  .panel { display: none; flex-direction: column; gap: 20px; flex: 1; }
-  .panel.active { display: flex; }
+  .panel { display: none; }
+  .panel.active { display: block; }
 
-  .panel-title {
-    font-size: 20px; font-weight: 700; color: #1c1c1e; letter-spacing: -0.4px;
-  }
-  .panel-subtitle {
-    font-size: 13px; color: #636366; margin-top: 3px; line-height: 1.5;
+  .panel h2 {
+    font-size: 20px;
+    margin-bottom: 6px;
+    letter-spacing: -0.25px;
   }
 
-  /* Form elements */
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .field label {
-    font-size: 12px; font-weight: 600; color: #3a3a3c; letter-spacing: 0.1px;
+  .hint {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 14px; }
+
+  label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #3a3a3c;
+    letter-spacing: 0.35px;
     text-transform: uppercase;
+    margin-bottom: 6px;
   }
-  .field-hint { font-size: 11.5px; color: #8e8e93; line-height: 1.4; }
 
-  input[type="text"], input[type="password"] {
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    width: 100%;
     font-family: inherit;
     font-size: 14px;
-    color: #1c1c1e;
-    background: #ffffff;
-    border: 1px solid #d1d1d6;
+    color: var(--text);
+    border: 1px solid var(--line);
     border-radius: 8px;
+    background: #fff;
     padding: 9px 12px;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    width: 100%;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  input:focus {
-    border-color: #0071e3;
+
+  textarea { min-height: 88px; resize: vertical; }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--blue);
     box-shadow: 0 0 0 3px rgba(0,113,227,0.18), inset 0 1px 3px rgba(0,0,0,0.04);
   }
-  input::placeholder { color: #aeaeb2; }
 
-  .input-row { display: flex; gap: 10px; }
-  .input-row input { flex: 1; }
-
-  /* Toggle */
-  .toggle-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: #ffffff;
-    border: 1px solid #e5e5ea;
-    border-radius: 10px;
-    padding: 13px 15px;
-  }
-  .toggle-info { flex: 1; }
-  .toggle-name { font-size: 14px; font-weight: 500; color: #1c1c1e; }
-  .toggle-desc { font-size: 12px; color: #8e8e93; margin-top: 2px; line-height: 1.4; }
-  .toggle-switch {
-    width: 38px; height: 22px; flex-shrink: 0;
-    background: #e5e5ea;
-    border-radius: 11px;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
-    border: none; outline: none;
-    margin-top: 1px;
-  }
-  .toggle-switch.on { background: #34c759; }
-  .toggle-switch::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 18px; height: 18px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
-  }
-  .toggle-switch.on::after { transform: translateX(16px); }
-
-  /* Select */
-  select {
-    font-family: inherit;
-    font-size: 14px; color: #1c1c1e;
-    background: #ffffff;
-    border: 1px solid #d1d1d6;
-    border-radius: 8px;
-    padding: 9px 12px;
-    outline: none;
-    cursor: pointer;
-    width: 100%;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  select:focus {
-    border-color: #0071e3;
-    box-shadow: 0 0 0 3px rgba(0,113,227,0.18);
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
 
-  /* Test connection button */
-  .btn-test {
-    font-family: inherit;
-    font-size: 13px; font-weight: 600;
-    color: #0071e3;
-    background: transparent;
-    border: 1.5px solid #0071e3;
-    border-radius: 8px;
-    padding: 9px 14px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
-    flex-shrink: 0;
+  .input-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
   }
-  .btn-test:hover { background: #0071e3; color: #fff; }
-  .btn-test.success { background: #34c759; border-color: #34c759; color: #fff; }
-  .btn-test.fail    { background: #ff3b30; border-color: #ff3b30; color: #fff; }
 
-  .status-msg {
-    font-size: 12px; margin-top: 4px;
+  .input-row .grow { flex: 1; }
+
+  .help {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #8e8e93;
+    line-height: 1.45;
+  }
+
+  .error {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--red);
     display: none;
   }
-  .status-msg.ok  { color: #34c759; display: block; }
-  .status-msg.err { color: #ff3b30; display: block; }
 
-  /* Tag input */
-  .tags-wrap {
-    background: #fff;
-    border: 1px solid #d1d1d6;
-    border-radius: 8px;
-    padding: 8px 10px;
-    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-    min-height: 44px;
-    cursor: text;
-  }
-  .tag {
-    background: #e5f0ff;
-    border: 1px solid #b3d4ff;
-    border-radius: 5px;
-    padding: 3px 8px 3px 9px;
-    font-size: 12px; color: #0071e3;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .tag button { background: none; border: none; cursor: pointer; color: #0071e3; font-size: 13px; line-height: 1; padding: 0; }
-  .tags-input {
-    border: none; outline: none; font-family: inherit;
-    font-size: 13px; color: #1c1c1e; flex: 1; min-width: 80px;
-    background: transparent;
+  .error.show { display: block; }
+
+  .status {
+    margin-top: 8px;
+    font-size: 12px;
+    display: none;
+    font-weight: 600;
   }
 
-  /* Summary */
-  .summary-card {
+  .status.ok { display: block; color: var(--green); }
+  .status.bad { display: block; color: var(--red); }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    margin-top: 9px;
+    color: #2d2d30;
+  }
+
+  .check input { width: 16px; height: 16px; }
+
+  .summary {
     background: #fff;
     border: 1px solid #e5e5ea;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .summary-row {
-    display: flex; gap: 12px; align-items: flex-start;
-    padding: 11px 15px;
-    border-bottom: 1px solid #f2f2f7;
-    font-size: 13px;
-  }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-key { color: #8e8e93; font-weight: 500; width: 140px; flex-shrink: 0; }
-  .summary-val { color: #1c1c1e; font-weight: 500; word-break: break-all; }
-  .summary-val.mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px; font-weight: 600;
-  }
-  .badge-green { background: #d1f5d9; color: #1a7f37; }
-  .badge-gray  { background: #e5e5ea; color: #636366; }
-  .badge-blue  { background: #ddeeff; color: #0071e3; }
-
-  /* CLI box */
-  .cli-box {
-    background: #1c1c1e;
     border-radius: 10px;
-    padding: 14px 16px;
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 12.5px;
-    color: #f2f2f7;
-    line-height: 1.7;
-    position: relative;
-    white-space: pre-wrap;
-    word-break: break-all;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.55;
   }
-  .cli-box .cmd-prefix { color: #34c759; }
-  .cli-box .flag { color: #64d2ff; }
-  .cli-box .val  { color: #ffd60a; }
-  .copy-btn {
-    position: absolute; top: 10px; right: 10px;
-    font-family: inherit; font-size: 11px; font-weight: 600;
-    color: #8e8e93; background: #3a3a3c;
-    border: none; border-radius: 6px;
-    padding: 5px 10px; cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
-  .copy-btn:hover { background: #555; color: #fff; }
-  .copy-btn.copied { background: #34c759; color: #fff; }
 
-  /* Nav buttons */
-  .nav-bar {
-    padding: 16px 32px 24px;
+  .summary-row + .summary-row { margin-top: 4px; }
+  .summary-key { color: #6f6f75; font-weight: 700; display: inline-block; min-width: 132px; }
+
+  .cli {
+    margin-top: 10px;
+    background: #1c1c1e;
+    color: #f2f2f7;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 120px;
+  }
+
+  .buttons {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .nav {
+    border-top: 1px solid #e5e5ea;
+    background: #f5f5f7;
+    padding: 14px 24px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #e5e5ea;
-    background: #f5f5f7;
+    gap: 10px;
   }
-  .btn {
-    font-family: inherit; font-size: 14px; font-weight: 600;
-    border-radius: 8px; padding: 9px 22px;
-    cursor: pointer; border: none;
-    transition: filter 0.15s, transform 0.08s;
-  }
-  .btn:hover { filter: brightness(0.94); }
-  .btn:active { transform: scale(0.98); }
-  .btn-back { background: #e5e5ea; color: #3a3a3c; }
-  .btn-next { background: #0071e3; color: #fff; }
-  .btn-next:disabled { background: #aeaeb2; cursor: not-allowed; filter: none; }
-  .btn-invisible { visibility: hidden; }
 
-  /* Tooltip */
-  [data-tip] { position: relative; cursor: help; }
-  [data-tip]::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-    background: #1c1c1e; color: #fff;
-    font-size: 11.5px; font-weight: 500;
-    padding: 5px 9px; border-radius: 7px;
-    white-space: normal; max-width: 200px; text-align: center;
-    pointer-events: none; opacity: 0;
-    transition: opacity 0.15s; z-index: 10;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  button {
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 18px;
+    cursor: pointer;
   }
-  [data-tip]:hover::after { opacity: 1; }
 
-  .section-gap { display: flex; flex-direction: column; gap: 10px; }
+  .btn-back {
+    background: #e5e5ea;
+    color: #3a3a3c;
+  }
+
+  .btn-back:hover { background: #d8d8dd; }
+
+  .btn-primary {
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #0062c6; }
+
+  .btn-subtle {
+    background: transparent;
+    border: 1.5px solid var(--blue);
+    color: var(--blue);
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .btn-subtle:hover {
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .btn-muted {
+    background: #e5e5ea;
+    color: #3a3a3c;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .btn-muted:hover { background: #d1d1d6; }
+
+  .btn-disabled {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  @media (max-width: 700px) {
+    .content { padding: 18px; }
+    .nav { padding: 12px 18px 18px; }
+    .row { grid-template-columns: 1fr; }
+    .summary-key { min-width: 110px; }
+  }
 </style>
 </head>
 <body>
+  <div class="window">
+    <div class="titlebar">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+      <div class="title">Immich-Go Desktop</div>
+    </div>
 
-<div class="window">
-  <!-- Title Bar -->
-  <div class="titlebar">
-    <div class="dot dot-red"></div>
-    <div class="dot dot-yellow"></div>
-    <div class="dot dot-green"></div>
-    <span class="titlebar-title">immich-go Uploader</span>
+    <div class="steps">
+      <div class="step-chip active" id="chip-1"><span class="step-dot">1</span>Connect</div>
+      <div class="step-chip" id="chip-2"><span class="step-dot">2</span>Folder + Options</div>
+      <div class="step-chip" id="chip-3"><span class="step-dot">3</span>Review</div>
+    </div>
+
+    <div class="content">
+      <section class="panel active" id="panel-1">
+        <h2>Connect</h2>
+        <p class="hint">Enter server URL and API key for <code>immich-go upload from-folder</code>.</p>
+
+        <div class="field">
+          <label for="serverUrl">Server URL</label>
+          <div class="input-row">
+            <div class="grow">
+              <input id="serverUrl" type="text" placeholder="http://192.168.1.10:2283" />
+              <div class="error" id="err-server">URL must start with http:// or https://</div>
+            </div>
+            <button class="btn-subtle" id="testBtn" type="button">Test</button>
+          </div>
+          <div class="status" id="connStatus"></div>
+          <div class="help">Optional: test calls <code>/api/server-info</code> using your API key.</div>
+        </div>
+
+        <div class="field">
+          <label for="apiKey">API Key</label>
+          <input id="apiKey" type="password" placeholder="Paste API key" />
+          <div class="error" id="err-key">API key is required.</div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-2">
+        <h2>Folder and Options</h2>
+        <p class="hint">Defaults are safe for a first run. You can change only what you need.</p>
+
+        <div class="row">
+          <div class="field">
+            <label for="preset">Preset</label>
+            <select id="preset">
+              <option value="safe" selected>Safe first run (recommended)</option>
+              <option value="google">Google Takeout style</option>
+              <option value="nas">NAS upload cleanup</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="detectedSystem">Detected System</label>
+            <input id="detectedSystem" type="text" readonly />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="folderPath">Folder Path</label>
+          <div class="input-row">
+            <div class="grow">
+              <input id="folderPath" type="text" placeholder="/Users/you/Pictures or C:\\Users\\you\\Pictures" />
+              <div class="error" id="err-folder">Folder path is required.</div>
+            </div>
+            <button class="btn-muted" id="openBtn" type="button">Open</button>
+          </div>
+          <input type="file" id="folderPicker" webkitdirectory multiple style="display:none" />
+          <div class="help">Browser security only exposes folder name. Confirm full path manually.</div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="folderAsAlbum">Album from Folder</label>
+            <select id="folderAsAlbum">
+              <option value="">Off</option>
+              <option value="FOLDER">Parent folder name</option>
+              <option value="PATH">Use subfolder names too (nested albums)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="onServerErrors">On Server Errors</label>
+            <select id="onServerErrors">
+              <option value="stop" selected>Stop</option>
+              <option value="continue">Continue</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="check"><input id="dryRun" type="checkbox" checked /> Dry run first</label>
+        <label class="check"><input id="pauseJobs" type="checkbox" /> Pause immich jobs during upload</label>
+        <div class="help">Command always includes <code>--pause-immich-jobs=true|false</code>.</div>
+      </section>
+
+      <section class="panel" id="panel-3">
+        <h2>Review and Copy</h2>
+        <p class="hint">Copy this command and paste it into your terminal.</p>
+
+        <div class="summary" id="summary"></div>
+        <div class="cli" id="commandOutput"></div>
+
+        <div class="buttons">
+          <button class="btn-subtle" id="copyBtn" type="button">Copy Command</button>
+          <button class="btn-muted" id="startOverBtn" type="button">Start Over</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="nav">
+      <button class="btn-back btn-disabled" id="backBtn" type="button">Back</button>
+      <button class="btn-primary" id="nextBtn" type="button">Continue</button>
+    </div>
   </div>
-
-  <!-- Steps -->
-  <div class="steps-bar">
-    <div class="step-item active" id="si-1">
-      <div class="step-num">1</div>
-      <div class="step-label">Connect</div>
-    </div>
-    <div class="step-connector" id="sc-1"></div>
-    <div class="step-item idle" id="si-2">
-      <div class="step-num">2</div>
-      <div class="step-label">Folder</div>
-    </div>
-    <div class="step-connector" id="sc-2"></div>
-    <div class="step-item idle" id="si-3">
-      <div class="step-num">3</div>
-      <div class="step-label">Options</div>
-    </div>
-    <div class="step-connector" id="sc-3"></div>
-    <div class="step-item idle" id="si-4">
-      <div class="step-num">4</div>
-      <div class="step-label">Review</div>
-    </div>
-  </div>
-
-  <!-- Content -->
-  <div class="content">
-
-    <!-- Step 1: Connect -->
-    <div class="panel active" id="p1">
-      <div>
-        <div class="panel-title">Connect to your Immich server</div>
-        <div class="panel-subtitle">Enter your server address and API key to get started. You can find your API key in Immich under <strong>Account Settings → API Keys</strong>.</div>
-      </div>
-      <div class="field">
-        <label data-tip="The address of your Immich server, e.g. http://192.168.1.10:2283">Server URL</label>
-        <div class="input-row">
-          <input type="text" id="serverUrl" placeholder="http://192.168.1.10:2283" />
-          <button class="btn-test" id="testBtn" onclick="testConnection()">Test</button>
-        </div>
-        <div class="status-msg" id="connStatus"></div>
-        <div class="field-hint">Include the protocol (http:// or https://) and port number.</div>
-      </div>
-      <div class="field">
-        <label data-tip="Your Immich API key. Must include asset.view, asset.upload, asset.copy permissions.">API Key</label>
-        <input type="password" id="apiKey" placeholder="Paste your API key here" />
-        <div class="field-hint">Never share your API key. It stays in this browser session only.</div>
-      </div>
-    </div>
-
-    <!-- Step 2: Folder -->
-    <div class="panel" id="p2">
-      <div>
-        <div class="panel-title">Choose a folder to upload</div>
-        <div class="panel-subtitle">Enter the path to the folder containing your photos. immich-go will scan this folder and upload your media.</div>
-      </div>
-      <div class="field">
-        <label>Folder Path</label>
-        <input type="text" id="folderPath" placeholder="/Users/yourname/Pictures  or  C:\Users\yourname\Pictures" />
-        <div class="field-hint">
-          <strong>Mac/Linux:</strong> /Users/yourname/Pictures &nbsp;·&nbsp;
-          <strong>Windows:</strong> C:\Users\yourname\Pictures
-        </div>
-      </div>
-      <div class="field">
-        <label>Include Subfolders</label>
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <div class="toggle-name">Recursive scan</div>
-            <div class="toggle-desc">Search inside all subfolders, not just the top-level folder.</div>
-          </div>
-          <button class="toggle-switch on" id="tog-recursive" onclick="toggleSwitch(this)"></button>
-        </div>
-      </div>
-      <div class="field">
-        <label>Create Albums from Subfolders</label>
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <div class="toggle-name">Auto-create albums</div>
-            <div class="toggle-desc">Each subfolder becomes an album in your Immich library.</div>
-          </div>
-          <button class="toggle-switch on" id="tog-albums" onclick="toggleSwitch(this)"></button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Options -->
-    <div class="panel" id="p3">
-      <div>
-        <div class="panel-title">Upload options</div>
-        <div class="panel-subtitle">Fine-tune how immich-go handles your files. All options are optional — the defaults work well for most users.</div>
-      </div>
-      <div class="section-gap">
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <div class="toggle-name" data-tip="Simulates the upload without sending any files. Great for a preview.">🧪 Dry Run</div>
-            <div class="toggle-desc">Preview what would be uploaded — no files are actually sent.</div>
-          </div>
-          <button class="toggle-switch" id="tog-dryrun" onclick="toggleSwitch(this)"></button>
-        </div>
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <div class="toggle-name">⏸ Pause Immich Jobs</div>
-            <div class="toggle-desc">Pause background jobs (thumbnailing, ML) during upload for better performance.</div>
-          </div>
-          <button class="toggle-switch on" id="tog-pause" onclick="toggleSwitch(this)"></button>
-        </div>
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <div class="toggle-name">🔁 Skip Duplicates</div>
-            <div class="toggle-desc">Don't upload files that already exist on your Immich server.</div>
-          </div>
-          <button class="toggle-switch on" id="tog-dupes" onclick="toggleSwitch(this)"></button>
-        </div>
-      </div>
-      <div class="field">
-        <label data-tip="Stack paired RAW and JPEG files into a single item in Immich">RAW+JPEG Stacking</label>
-        <select id="rawStack">
-          <option value="">Don't stack</option>
-          <option value="--stack-jpg-raw" selected>Stack RAW+JPEG pairs</option>
-        </select>
-      </div>
-      <div class="field">
-        <label data-tip="Patterns of filenames or folders to exclude from upload">Exclude Patterns (ban-file)</label>
-        <div class="tags-wrap" id="banTags" onclick="document.getElementById('banInput').focus()">
-          <div class="tag">.DS_Store <button onclick="removeTag(this)">×</button></div>
-          <div class="tag">Thumbs.db <button onclick="removeTag(this)">×</button></div>
-          <input class="tags-input" id="banInput" placeholder="Type and press Enter…" onkeydown="addTag(event)" />
-        </div>
-        <div class="field-hint">Press Enter to add a pattern. Patterns ending in / apply to folders.</div>
-      </div>
-    </div>
-
-    <!-- Step 4: Review -->
-    <div class="panel" id="p4">
-      <div>
-        <div class="panel-title">Review & copy command</div>
-        <div class="panel-subtitle">Everything looks good! Copy the command below and run it in your terminal.</div>
-      </div>
-      <div class="summary-card" id="summaryCard"></div>
-      <div class="field">
-        <label>Generated Command</label>
-        <div class="cli-box" id="cliBox"><button class="copy-btn" id="copyBtn" onclick="copyCmd()">Copy</button><span id="cliText"></span></div>
-      </div>
-      <div class="field">
-        <div class="field-hint">💡 <strong>How to run:</strong> Open <strong>Terminal</strong> (Mac/Linux) or <strong>Command Prompt / PowerShell</strong> (Windows), paste the command, and press Enter. Make sure <code>immich-go</code> is installed and in your PATH.</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Nav -->
-  <div class="nav-bar">
-    <button class="btn btn-back btn-invisible" id="backBtn" onclick="goBack()">← Back</button>
-    <button class="btn btn-next" id="nextBtn" onclick="goNext()">Continue →</button>
-  </div>
-</div>
 
 <script>
-  let step = 1;
-  const total = 4;
+  const state = { step: 1, total: 3 };
+  const detectedSystem = detectSystem();
+  const detectedShell = detectedSystem === 'Windows' ? 'powershell' : 'bash';
+  const folderPlaceholderBySystem = {
+    macOS: '/Users/you/Pictures',
+    Windows: 'C:\\Users\\you\\Pictures',
+    Linux: '/home/you/Pictures'
+  };
 
-  function updateSteps() {
-    for (let i = 1; i <= total; i++) {
-      const si = document.getElementById(`si-${i}`);
-      si.className = 'step-item ' + (i < step ? 'done' : i === step ? 'active' : 'idle');
-      if (i < total) {
-        const sc = document.getElementById(`sc-${i}`);
-        sc.className = 'step-connector' + (i < step ? ' done' : '');
-      }
-      document.getElementById(`p${i}`).className = 'panel' + (i === step ? ' active' : '');
+  const presets = {
+    safe: {
+      dryRun: true,
+      pauseJobs: false,
+      folderAsAlbum: '',
+      onServerErrors: 'stop'
+    },
+    google: {
+      dryRun: true,
+      pauseJobs: false,
+      folderAsAlbum: 'PATH',
+      onServerErrors: 'continue'
+    },
+    nas: {
+      dryRun: true,
+      pauseJobs: true,
+      folderAsAlbum: 'FOLDER',
+      onServerErrors: 'stop'
     }
-    const back = document.getElementById('backBtn');
-    const next = document.getElementById('nextBtn');
-    back.classList.toggle('btn-invisible', step === 1);
-    next.textContent = step === total ? '✓ Done' : 'Continue →';
+  };
+
+  const el = {
+    panels: [1,2,3].map(i => document.getElementById(`panel-${i}`)),
+    chips: [1,2,3].map(i => document.getElementById(`chip-${i}`)),
+    backBtn: document.getElementById('backBtn'),
+    nextBtn: document.getElementById('nextBtn'),
+    testBtn: document.getElementById('testBtn'),
+    openBtn: document.getElementById('openBtn'),
+    folderPicker: document.getElementById('folderPicker'),
+    copyBtn: document.getElementById('copyBtn'),
+    startOverBtn: document.getElementById('startOverBtn'),
+
+    serverUrl: document.getElementById('serverUrl'),
+    apiKey: document.getElementById('apiKey'),
+    preset: document.getElementById('preset'),
+    detectedSystem: document.getElementById('detectedSystem'),
+    folderPath: document.getElementById('folderPath'),
+    folderAsAlbum: document.getElementById('folderAsAlbum'),
+    onServerErrors: document.getElementById('onServerErrors'),
+    dryRun: document.getElementById('dryRun'),
+    pauseJobs: document.getElementById('pauseJobs'),
+
+    errServer: document.getElementById('err-server'),
+    errKey: document.getElementById('err-key'),
+    errFolder: document.getElementById('err-folder'),
+    connStatus: document.getElementById('connStatus'),
+
+    summary: document.getElementById('summary'),
+    commandOutput: document.getElementById('commandOutput')
+  };
+
+  function init() {
+    el.detectedSystem.value = detectedSystem;
+    el.folderPath.placeholder = folderPlaceholderBySystem[detectedSystem] || '/path/to/photos';
+
+    el.backBtn.addEventListener('click', onBack);
+    el.nextBtn.addEventListener('click', onNext);
+    el.testBtn.addEventListener('click', testConnection);
+    el.openBtn.addEventListener('click', () => el.folderPicker.click());
+    el.folderPicker.addEventListener('change', onPickFolder);
+    el.copyBtn.addEventListener('click', copyCommand);
+    el.startOverBtn.addEventListener('click', resetAll);
+    el.preset.addEventListener('change', applyPreset);
+
+    el.serverUrl.addEventListener('input', () => hideError(el.errServer));
+    el.apiKey.addEventListener('input', () => hideError(el.errKey));
+    el.folderPath.addEventListener('input', () => hideError(el.errFolder));
+
+    applyPreset();
+    render();
   }
 
-  function validate() {
-    if (step === 1) {
-      return document.getElementById('serverUrl').value.trim() &&
-             document.getElementById('apiKey').value.trim();
+  function render() {
+    el.panels.forEach((panel, idx) => panel.classList.toggle('active', idx + 1 === state.step));
+
+    el.chips.forEach((chip, idx) => {
+      chip.classList.remove('active', 'done');
+      const n = idx + 1;
+      if (n < state.step) chip.classList.add('done');
+      else if (n === state.step) chip.classList.add('active');
+    });
+
+    const showBack = state.step > 1;
+    el.backBtn.classList.toggle('btn-disabled', !showBack);
+
+    el.nextBtn.textContent = state.step === 3 ? 'Start Over' : 'Continue';
+  }
+
+  function onNext() {
+    if (state.step === 3) {
+      resetAll();
+      return;
     }
-    if (step === 2) return document.getElementById('folderPath').value.trim();
+
+    if (!validateStep(state.step)) return;
+
+    state.step += 1;
+
+    if (state.step === 3) buildReview();
+
+    render();
+  }
+
+  function onBack() {
+    if (state.step <= 1) return;
+    state.step -= 1;
+    render();
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      let ok = true;
+      const url = el.serverUrl.value.trim();
+      const key = el.apiKey.value.trim();
+
+      if (!/^https?:\/\//i.test(url)) {
+        showError(el.errServer);
+        ok = false;
+      }
+
+      if (!key) {
+        showError(el.errKey);
+        ok = false;
+      }
+
+      return ok;
+    }
+
+    if (step === 2) {
+      const folder = el.folderPath.value.trim();
+      if (!folder) {
+        showError(el.errFolder);
+        return false;
+      }
+    }
+
     return true;
   }
 
-  function goNext() {
-    if (step === total) return;
-    if (!validate()) {
-      // shake effect
-      const p = document.getElementById(`p${step}`);
-      p.style.animation = 'none';
-      setTimeout(() => { p.style.animation = ''; }, 10);
+  async function testConnection() {
+    const url = el.serverUrl.value.trim();
+    const key = el.apiKey.value.trim();
+
+    if (!/^https?:\/\//i.test(url) || !key) {
+      validateStep(1);
       return;
     }
-    if (step === total - 1) buildSummary();
-    step++;
-    updateSteps();
-    window.scrollTo(0, 0);
+
+    el.testBtn.disabled = true;
+    el.testBtn.textContent = 'Testing...';
+    el.connStatus.className = 'status';
+    el.connStatus.textContent = '';
+
+    try {
+      const endpoint = `${url.replace(/\/+$/, '')}/api/server-info`;
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: { 'x-api-key': key }
+      });
+
+      if (response.ok) {
+        el.connStatus.className = 'status ok';
+        el.connStatus.textContent = `Connected (${response.status})`;
+      } else {
+        el.connStatus.className = 'status bad';
+        el.connStatus.textContent = `Server responded ${response.status}. Check URL or key.`;
+      }
+    } catch (error) {
+      el.connStatus.className = 'status bad';
+      el.connStatus.textContent = 'Could not reach server. Check URL/network/proxy.';
+    } finally {
+      el.testBtn.disabled = false;
+      el.testBtn.textContent = 'Test';
+    }
   }
 
-  function goBack() {
-    if (step === 1) return;
-    step--;
-    updateSteps();
+  function onPickFolder(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const top = (file.webkitRelativePath || file.name).split('/')[0];
+    const base = detectedSystem === 'Windows'
+      ? 'C:\\Users\\you\\'
+      : detectedSystem === 'Linux'
+        ? '/home/you/'
+        : '/Users/you/';
+    el.folderPath.value = base + top;
+    hideError(el.errFolder);
   }
 
-  function toggleSwitch(el) { el.classList.toggle('on'); }
-
-  function isOn(id) { return document.getElementById(id).classList.contains('on'); }
-
-  function addTag(e) {
-    if (e.key !== 'Enter') return;
-    const inp = document.getElementById('banInput');
-    const val = inp.value.trim();
-    if (!val) return;
-    const tag = document.createElement('div');
-    tag.className = 'tag';
-    tag.innerHTML = `${val} <button onclick="removeTag(this)">×</button>`;
-    document.getElementById('banTags').insertBefore(tag, inp);
-    inp.value = '';
+  function applyPreset() {
+    const config = presets[el.preset.value] || presets.safe;
+    el.dryRun.checked = config.dryRun;
+    el.pauseJobs.checked = config.pauseJobs;
+    el.folderAsAlbum.value = config.folderAsAlbum;
+    el.onServerErrors.value = config.onServerErrors;
   }
 
-  function removeTag(btn) { btn.parentElement.remove(); }
-
-  function getBanPatterns() {
-    return [...document.querySelectorAll('#banTags .tag')]
-      .map(t => t.textContent.replace('×','').trim());
-  }
-
-  function testConnection() {
-    const url = document.getElementById('serverUrl').value.trim();
-    const key = document.getElementById('apiKey').value.trim();
-    const btn = document.getElementById('testBtn');
-    const msg = document.getElementById('connStatus');
-    if (!url || !key) { msg.textContent = 'Please fill in both fields first.'; msg.className = 'status-msg err'; return; }
-    btn.textContent = '…'; btn.disabled = true;
-    // Simulate a test (real test would require CORS support on the server)
-    setTimeout(() => {
-      const looks = url.startsWith('http') && key.length > 10;
-      btn.textContent = looks ? '✓ OK' : '✗ Fail';
-      btn.className = 'btn-test ' + (looks ? 'success' : 'fail');
-      msg.textContent = looks ? 'Connection details look valid!' : 'Check your URL and API key.';
-      msg.className = 'status-msg ' + (looks ? 'ok' : 'err');
-      btn.disabled = false;
-      setTimeout(() => { btn.textContent = 'Test'; btn.className = 'btn-test'; }, 3000);
-    }, 900);
-  }
-
-  function buildSummary() {
-    const url = document.getElementById('serverUrl').value.trim();
-    const folder = document.getElementById('folderPath').value.trim();
-    const dryRun = isOn('tog-dryrun');
-    const recursive = isOn('tog-recursive');
-    const albums = isOn('tog-albums');
-    const pause = isOn('tog-pause');
-    const dupes = isOn('tog-dupes');
-    const rawStack = document.getElementById('rawStack').value;
-    const bans = getBanPatterns();
-
-    const rows = [
-      ['Server', `<span class="summary-val mono">${url}</span>`],
-      ['Folder', `<span class="summary-val mono">${folder}</span>`],
-      ['Mode', dryRun ? '<span class="badge badge-blue">Dry Run</span>' : '<span class="badge badge-green">Live Upload</span>'],
-      ['Subfolders', recursive ? '<span class="badge badge-green">Recursive</span>' : '<span class="badge badge-gray">Top-level only</span>'],
-      ['Albums', albums ? '<span class="badge badge-green">Auto-create</span>' : '<span class="badge badge-gray">Off</span>'],
-      ['Pause Jobs', pause ? '<span class="badge badge-green">Enabled</span>' : '<span class="badge badge-gray">Disabled</span>'],
-      ['Skip Dupes', dupes ? '<span class="badge badge-green">Enabled</span>' : '<span class="badge badge-gray">Disabled</span>'],
-      ['RAW Stack', rawStack ? '<span class="badge badge-blue">RAW+JPEG</span>' : '<span class="badge badge-gray">None</span>'],
+  function buildReview() {
+    const v = getValues();
+    const lines = [
+      summaryRow('Server', v.serverUrl),
+      summaryRow('Folder', v.folderPath),
+      summaryRow('Detected System', detectedSystem),
+      summaryRow('Dry Run', v.dryRun ? 'Yes' : 'No'),
+      summaryRow('Pause Jobs', v.pauseJobs ? 'true' : 'false'),
+      summaryRow('Folder as Album', v.folderAsAlbum || 'off'),
+      summaryRow('On Server Errors', v.onServerErrors)
     ];
-    if (bans.length) rows.push(['Excluded', `<span class="summary-val">${bans.join(', ')}</span>`]);
 
-    document.getElementById('summaryCard').innerHTML = rows.map(([k,v]) =>
-      `<div class="summary-row"><span class="summary-key">${k}</span>${v}</div>`
-    ).join('');
-
-    // Build CLI
-    let cmd = `immich-go upload from-folder`;
-    cmd += ` \\\n  --server="${url}"`;
-    cmd += ` \\\n  --api-key="YOUR_API_KEY"`;
-    if (dryRun) cmd += ` \\\n  --dry-run`;
-    if (!dupes) cmd += ` \\\n  --no-skip-duplicates`;
-    if (albums) cmd += ` \\\n  --create-album-from-folder`;
-    if (pause) cmd += ` \\\n  --manage-immich-jobs`;
-    if (rawStack) cmd += ` \\\n  ${rawStack}`;
-    bans.forEach(b => { cmd += ` \\\n  --ban-file="${b}"`; });
-    cmd += ` \\\n  "${folder}"`;
-
-    // Colorize
-    const colored = cmd
-      .replace(/immich-go/g, '<span class="cmd-prefix">immich-go</span>')
-      .replace(/(--[\w-]+)/g, '<span class="flag">$1</span>')
-      .replace(/="([^"]*)"/g, '="<span class="val">$1</span>"');
-
-    document.getElementById('cliText').innerHTML = colored;
-    window._rawCmd = cmd;
+    el.summary.innerHTML = lines.join('');
+    el.commandOutput.textContent = buildCommand(v);
   }
 
-  function copyCmd() {
-    if (!window._rawCmd) return;
-    navigator.clipboard.writeText(window._rawCmd).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = 'Copied!'; btn.className = 'copy-btn copied';
-      setTimeout(() => { btn.textContent = 'Copy'; btn.className = 'copy-btn'; }, 2000);
+  function getValues() {
+    return {
+      serverUrl: el.serverUrl.value.trim(),
+      apiKey: el.apiKey.value.trim(),
+      folderPath: el.folderPath.value.trim(),
+      folderAsAlbum: el.folderAsAlbum.value,
+      onServerErrors: el.onServerErrors.value,
+      dryRun: el.dryRun.checked,
+      pauseJobs: el.pauseJobs.checked
+    };
+  }
+
+  function buildCommand(v) {
+    const q = (txt) => detectedShell === 'powershell' ? quotePowerShell(txt) : quotePosix(txt);
+    const joiner = detectedShell === 'powershell' ? ' `\n  ' : ' \\\n  ';
+
+    const flags = [
+      `--server=${q(v.serverUrl)}`,
+      `--api-key=${q(v.apiKey)}`,
+      `--pause-immich-jobs=${v.pauseJobs ? 'true' : 'false'}`,
+      `--on-server-errors=${v.onServerErrors}`
+    ];
+
+    if (v.dryRun) flags.push('--dry-run');
+    if (v.folderAsAlbum) flags.push(`--folder-as-album=${v.folderAsAlbum}`);
+
+    let cmd = 'immich-go upload from-folder';
+    flags.forEach(flag => { cmd += joiner + flag; });
+    cmd += joiner + q(v.folderPath);
+    return cmd;
+  }
+
+  function summaryRow(k, v) {
+    return `<div class="summary-row"><span class="summary-key">${escapeHtml(k)}</span>${escapeHtml(String(v))}</div>`;
+  }
+
+  function quotePosix(value) {
+    return `'${String(value).replace(/'/g, `'"'"'`)}'`;
+  }
+
+  function quotePowerShell(value) {
+    return `'${String(value).replace(/'/g, "''")}'`;
+  }
+
+  function copyCommand() {
+    const text = el.commandOutput.textContent;
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(() => {
+      const old = el.copyBtn.textContent;
+      el.copyBtn.textContent = 'Copied';
+      setTimeout(() => { el.copyBtn.textContent = old; }, 1200);
     });
   }
 
-  updateSteps();
+  function resetAll() {
+    el.serverUrl.value = '';
+    el.apiKey.value = '';
+    el.folderPath.value = '';
+    el.connStatus.className = 'status';
+    el.connStatus.textContent = '';
+    el.summary.innerHTML = '';
+    el.commandOutput.textContent = '';
+
+    hideError(el.errServer);
+    hideError(el.errKey);
+    hideError(el.errFolder);
+
+    el.preset.value = 'safe';
+    applyPreset();
+
+    state.step = 1;
+    render();
+  }
+
+  function showError(node) { node.classList.add('show'); }
+  function hideError(node) { node.classList.remove('show'); }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function detectSystem() {
+    const ua = navigator.userAgent || '';
+    if (/Win/i.test(ua)) return 'Windows';
+    if (/Mac/i.test(ua)) return 'macOS';
+    return 'Linux';
+  }
+
+  init();
 </script>
 </body>
 </html>
