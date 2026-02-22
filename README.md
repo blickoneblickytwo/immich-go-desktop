@@ -3,7 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 
-<img width="2016" height="2112" alt="Image_7b47zo7b47zo7b47" src="https://github.com/user-attachments/assets/382b43cd-6a2b-472e-8438-2727a9e3a5fe" />
+<img width="2080" height="2048" alt="previewimage_ukujb7ukujb7ukuj" src="https://github.com/user-attachments/assets/7a562b7c-4477-4d3b-a809-f8a8812d1a71" />
+
 
 A simple web interface that builds [immich-go](https://github.com/simulot/immich-go) commands for you. No more memorizing terminal flags or fixing typos in long command strings.
 
