@@ -362,6 +362,12 @@
           <input id="apiKey" type="password" placeholder="Paste API key" />
           <div class="error" id="err-key">API key is required.</div>
         </div>
+
+        <div class="field">
+          <label for="adminApiKey">Admin API Key (Optional)</label>
+          <input id="adminApiKey" type="password" placeholder="Needed for pause-jobs with non-admin user key" />
+          <div class="help">Used only when provided. Enables <code>--admin-api-key=...</code>.</div>
+        </div>
       </section>
 
       <section class="panel" id="panel-2">
@@ -406,7 +412,7 @@
             </select>
           </div>
           <div class="field">
-            <label for="onServerErrors">On Server Errors</label>
+            <label for="onServerErrors">On Errors</label>
             <select id="onServerErrors">
               <option value="stop" selected>Stop</option>
               <option value="continue">Continue</option>
@@ -416,7 +422,7 @@
 
         <label class="check"><input id="dryRun" type="checkbox" checked /> Dry run first</label>
         <label class="check"><input id="pauseJobs" type="checkbox" /> Pause immich jobs during upload</label>
-        <div class="help">Command always includes <code>--pause-immich-jobs=true|false</code>.</div>
+        <div class="help" id="pauseHint">Command always includes <code>--pause-immich-jobs=true|false</code>.</div>
       </section>
 
       <section class="panel" id="panel-3">
@@ -483,6 +489,7 @@
 
     serverUrl: document.getElementById('serverUrl'),
     apiKey: document.getElementById('apiKey'),
+    adminApiKey: document.getElementById('adminApiKey'),
     preset: document.getElementById('preset'),
     detectedSystem: document.getElementById('detectedSystem'),
     folderPath: document.getElementById('folderPath'),
@@ -495,6 +502,7 @@
     errKey: document.getElementById('err-key'),
     errFolder: document.getElementById('err-folder'),
     connStatus: document.getElementById('connStatus'),
+    pauseHint: document.getElementById('pauseHint'),
 
     summary: document.getElementById('summary'),
     commandOutput: document.getElementById('commandOutput')
@@ -516,8 +524,11 @@
     el.serverUrl.addEventListener('input', () => hideError(el.errServer));
     el.apiKey.addEventListener('input', () => hideError(el.errKey));
     el.folderPath.addEventListener('input', () => hideError(el.errFolder));
+    el.pauseJobs.addEventListener('change', updatePauseHint);
+    el.adminApiKey.addEventListener('input', updatePauseHint);
 
     applyPreset();
+    updatePauseHint();
     render();
   }
 
@@ -602,24 +613,37 @@
     el.connStatus.className = 'status';
     el.connStatus.textContent = '';
 
-    try {
-      const endpoint = `${url.replace(/\/+$/, '')}/api/server-info`;
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: { 'x-api-key': key }
-      });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      if (response.ok) {
+    try {
+      const base = url.replace(/\/+$/, '');
+      const candidates = [`${base}/api/server-info`, `${base}/api/server-info/ping`, `${base}/api/server/ping`];
+      let response = null;
+      let endpoint = '';
+
+      for (const candidate of candidates) {
+        endpoint = candidate;
+        response = await fetch(candidate, {
+          method: 'GET',
+          headers: { 'x-api-key': key },
+          signal: controller.signal
+        });
+        if (response.status !== 404) break;
+      }
+
+      if (response && response.ok) {
         el.connStatus.className = 'status ok';
-        el.connStatus.textContent = `Connected (${response.status})`;
-      } else {
+        el.connStatus.textContent = `Connected (${response.status}) via ${new URL(endpoint).pathname}`;
+      } else if (response) {
         el.connStatus.className = 'status bad';
         el.connStatus.textContent = `Server responded ${response.status}. Check URL or key.`;
       }
     } catch (error) {
       el.connStatus.className = 'status bad';
-      el.connStatus.textContent = 'Could not reach server. Check URL/network/proxy.';
+      el.connStatus.textContent = formatConnectionError(error);
     } finally {
+      clearTimeout(timeoutId);
       el.testBtn.disabled = false;
       el.testBtn.textContent = 'Test';
     }
@@ -645,6 +669,7 @@
     el.pauseJobs.checked = config.pauseJobs;
     el.folderAsAlbum.value = config.folderAsAlbum;
     el.onServerErrors.value = config.onServerErrors;
+    updatePauseHint();
   }
 
   function buildReview() {
@@ -655,8 +680,9 @@
       summaryRow('Detected System', detectedSystem),
       summaryRow('Dry Run', v.dryRun ? 'Yes' : 'No'),
       summaryRow('Pause Jobs', v.pauseJobs ? 'true' : 'false'),
+      summaryRow('Admin API Key', v.adminApiKey ? 'Provided' : 'Not set'),
       summaryRow('Folder as Album', v.folderAsAlbum || 'off'),
-      summaryRow('On Server Errors', v.onServerErrors)
+      summaryRow('On Errors', v.onServerErrors)
     ];
 
     el.summary.innerHTML = lines.join('');
@@ -667,6 +693,7 @@
     return {
       serverUrl: el.serverUrl.value.trim(),
       apiKey: el.apiKey.value.trim(),
+      adminApiKey: el.adminApiKey.value.trim(),
       folderPath: el.folderPath.value.trim(),
       folderAsAlbum: el.folderAsAlbum.value,
       onServerErrors: el.onServerErrors.value,
@@ -678,18 +705,20 @@
   function buildCommand(v) {
     const q = (txt) => detectedShell === 'powershell' ? quotePowerShell(txt) : quotePosix(txt);
     const joiner = detectedShell === 'powershell' ? ' `\n  ' : ' \\\n  ';
+    const binary = detectedShell === 'powershell' ? '.\\immich-go' : 'immich-go';
 
     const flags = [
       `--server=${q(v.serverUrl)}`,
       `--api-key=${q(v.apiKey)}`,
       `--pause-immich-jobs=${v.pauseJobs ? 'true' : 'false'}`,
-      `--on-server-errors=${v.onServerErrors}`
+      `--on-errors=${v.onServerErrors}`
     ];
 
+    if (v.adminApiKey) flags.push(`--admin-api-key=${q(v.adminApiKey)}`);
     if (v.dryRun) flags.push('--dry-run');
     if (v.folderAsAlbum) flags.push(`--folder-as-album=${v.folderAsAlbum}`);
 
-    let cmd = 'immich-go upload from-folder';
+    let cmd = `${binary} upload from-folder`;
     flags.forEach(flag => { cmd += joiner + flag; });
     cmd += joiner + q(v.folderPath);
     return cmd;
@@ -707,20 +736,22 @@
     return `'${String(value).replace(/'/g, "''")}'`;
   }
 
-  function copyCommand() {
+  async function copyCommand() {
     const text = el.commandOutput.textContent;
     if (!text) return;
 
-    navigator.clipboard.writeText(text).then(() => {
-      const old = el.copyBtn.textContent;
-      el.copyBtn.textContent = 'Copied';
-      setTimeout(() => { el.copyBtn.textContent = old; }, 1200);
-    });
+    try {
+      await copyText(text);
+      flashButtonText(el.copyBtn, 'Copied');
+    } catch {
+      flashButtonText(el.copyBtn, 'Copy failed');
+    }
   }
 
   function resetAll() {
     el.serverUrl.value = '';
     el.apiKey.value = '';
+    el.adminApiKey.value = '';
     el.folderPath.value = '';
     el.connStatus.className = 'status';
     el.connStatus.textContent = '';
@@ -733,6 +764,7 @@
 
     el.preset.value = 'safe';
     applyPreset();
+    updatePauseHint();
 
     state.step = 1;
     render();
@@ -740,6 +772,53 @@
 
   function showError(node) { node.classList.add('show'); }
   function hideError(node) { node.classList.remove('show'); }
+
+  function updatePauseHint() {
+    const needsAdmin = el.pauseJobs.checked && !el.adminApiKey.value.trim();
+    if (needsAdmin) {
+      el.pauseHint.innerHTML = 'Tip: pausing jobs may require <code>--admin-api-key</code> when your main API key is not admin.';
+      return;
+    }
+    el.pauseHint.innerHTML = 'Command always includes <code>--pause-immich-jobs=true|false</code>.';
+  }
+
+  function formatConnectionError(error) {
+    if (error && error.name === 'AbortError') {
+      return 'Connection timed out. Verify server URL and network reachability.';
+    }
+
+    if (location.protocol === 'file:') {
+      return 'Request blocked from file:// context. Serve this page over http://localhost to test connectivity.';
+    }
+
+    return 'Could not reach server. Check URL/network/proxy.';
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (!ok) throw new Error('execCommand copy failed');
+  }
+
+  function flashButtonText(button, text) {
+    const old = button.textContent;
+    button.textContent = text;
+    setTimeout(() => { button.textContent = old; }, 1200);
+  }
 
   function escapeHtml(str) {
     return String(str)
