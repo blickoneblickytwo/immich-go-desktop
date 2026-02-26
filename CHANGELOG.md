@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.1.1 – 2026-02-26
 
 - Switch generated error handling flag to `--on-errors` to match current immich-go.
 - Fix Windows command to start with `.\immich-go upload from-folder`.
