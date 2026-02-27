@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["-apple-system", "BlinkMacSystemFont", '"SF Pro Text"', '"Helvetica Neue"', "Helvetica", "Arial", "sans-serif"],
+        mono: ['"SF Mono"', "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,6 +51,24 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        mac: {
+          red: "hsl(var(--mac-red))",
+          yellow: "hsl(var(--mac-yellow))",
+          green: "hsl(var(--mac-green))",
+          titlebar: "hsl(var(--mac-titlebar))",
+          "window-bg": "hsl(var(--mac-window-bg))",
+          "window-border": "hsl(var(--mac-window-border))",
+        },
+        terminal: {
+          bg: "hsl(var(--terminal-bg))",
+          fg: "hsl(var(--terminal-fg))",
+          green: "hsl(var(--terminal-green))",
+        },
+        step: {
+          active: "hsl(var(--step-active))",
+          done: "hsl(var(--step-done))",
+          inactive: "hsl(var(--step-inactive))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -65,20 +87,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
