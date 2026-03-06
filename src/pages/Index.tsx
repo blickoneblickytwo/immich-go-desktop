@@ -4,6 +4,7 @@ import StepIndicator from "@/components/StepIndicator";
 import ConnectionStep from "@/components/steps/ConnectionStep";
 import OptionsStep from "@/components/steps/OptionsStep";
 import ReviewStep from "@/components/steps/ReviewStep";
+import CommandPreview from "@/components/CommandPreview";
 import { WizardState, defaultState, detectOS } from "@/lib/command-builder";
 
 const stepLabels = ["Connection", "Options", "Review"];
