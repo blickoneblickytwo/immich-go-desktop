@@ -4,6 +4,7 @@ import StepIndicator from "@/components/StepIndicator";
 import ConnectionStep from "@/components/steps/ConnectionStep";
 import OptionsStep from "@/components/steps/OptionsStep";
 import ReviewStep from "@/components/steps/ReviewStep";
+import CommandPreview from "@/components/CommandPreview";
 import { WizardState, defaultState, detectOS } from "@/lib/command-builder";
 
 const stepLabels = ["Connection", "Options", "Review"];
@@ -23,7 +24,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 gap-4">
       <MacWindow>
         <StepIndicator currentStep={step} totalSteps={3} labels={stepLabels} />
         {step === 1 && (
@@ -36,6 +37,7 @@ const Index = () => {
           <ReviewStep state={state} os={os} onBack={() => setStep(2)} onReset={reset} />
         )}
       </MacWindow>
+      <CommandPreview state={state} os={os} />
     </div>
   );
 };
