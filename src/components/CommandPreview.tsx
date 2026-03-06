@@ -59,7 +59,7 @@ const CommandPreview: React.FC<Props> = ({ state, os }) => {
             className="h-7 px-2 text-xs gap-1 text-muted-foreground"
             onClick={copyToClipboard}
           >
-            {copied ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-step-done" /> : <Copy className="w-3 h-3" />}
             {copied ? "Copied!" : "Copy"}
           </Button>
         </div>
