@@ -24,9 +24,42 @@ import {
   type UploadSource,
 } from "@/lib/friendly-flow";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Folder, Image as ImageIcon, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Folder, Image as ImageIcon, Loader2, XCircle } from "lucide-react";
 
 const stepLabels = ["What to upload", "Connect", "Choose style", "Done"];
+
+type KeyValidationLevel = "ok" | "warn" | "error";
+type TestStatus = "idle" | "success" | "warning" | "error";
+
+function validateApiKeyFormat(key: string): { level: KeyValidationLevel; message: string } {
+  const trimmed = key.trim();
+  if (!trimmed) return { level: "error", message: "API key is required." };
+  if (trimmed.length < 20) return { level: "error", message: "Key seems too short. Check your Immich dashboard." };
+  if (/\s/.test(trimmed)) return { level: "error", message: "API keys should not contain spaces." };
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+  const isToken = /^[A-Za-z0-9_\-+/=.]{20,}$/.test(trimmed);
+  if (isUuid || isToken) {
+    return { level: "ok", message: "Format looks valid." };
+  }
+  return {
+    level: "warn",
+    message: "Unusual format. Double-check your key, but it may still be valid.",
+  };
+}
+
+function isPrivateHost(serverUrl: string): boolean {
+  try {
+    const host = new URL(serverUrl).hostname;
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    if (/^10\./.test(host)) return true;
+    if (/^192\.168\./.test(host)) return true;
+    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 const Index = () => {
   const [step, setStep] = useState(1);
@@ -39,6 +72,9 @@ const Index = () => {
   const [connecting, setConnecting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [apiKeyError, setApiKeyError] = useState("");
+  const [apiKeyWarning, setApiKeyWarning] = useState("");
+  const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+  const [testMessage, setTestMessage] = useState("");
   const detectedOs = useMemo(() => detectOS(), []);
   const os = platformOverride === "auto" ? detectedOs : platformOverride;
   const selectedShell: CommandShell = os === "windows" ? windowsShell : "unix";
@@ -71,6 +107,9 @@ const Index = () => {
     setConnectError("");
     setServerError("");
     setApiKeyError("");
+    setApiKeyWarning("");
+    setTestStatus("idle");
+    setTestMessage("");
   }, []);
 
   const presets = useMemo(() => getPresets(state.source), [state.source]);
@@ -128,7 +167,10 @@ const Index = () => {
     const key = state.apiKey.trim();
     setServerError("");
     setApiKeyError("");
+    setApiKeyWarning("");
     setConnectError("");
+    setTestStatus("idle");
+    setTestMessage("");
 
     let blocked = false;
     if (!server) {
@@ -138,9 +180,12 @@ const Index = () => {
       setServerError("Don't forget http:// or https:// at the start.");
       blocked = true;
     }
-    if (!key) {
-      setApiKeyError("Enter your API key.");
+    const keyValidation = validateApiKeyFormat(key);
+    if (keyValidation.level === "error") {
+      setApiKeyError(keyValidation.message);
       blocked = true;
+    } else if (keyValidation.level === "warn") {
+      setApiKeyWarning(keyValidation.message);
     }
     if (blocked) return;
 
@@ -150,7 +195,21 @@ const Index = () => {
       const response = await fetch(`${url}/api/server/about`, {
         headers: { "x-api-key": key },
       });
-      if (!response.ok) throw new Error("connection failed");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setTestStatus("error");
+          setTestMessage("Server reached, but the API key was rejected.");
+          setConnectError("API key rejected by server.");
+          return;
+        }
+        setTestStatus("error");
+        setTestMessage(`Server responded with HTTP ${response.status}.`);
+        setConnectError(`Connection test failed with HTTP ${response.status}.`);
+        return;
+      }
+
+      setTestStatus("success");
+      setTestMessage("Connected successfully.");
 
       if (state.rememberOnDevice) {
         localStorage.setItem(
@@ -161,10 +220,32 @@ const Index = () => {
         localStorage.removeItem(REMEMBER_KEY);
       }
       setStep(3);
-    } catch {
-      setConnectError(
-        "Couldn't connect right now. Check URL/key and try again. If CORS blocks this browser check, you can still continue."
-      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const likelyCorsOrNetwork = /failed to fetch|networkerror|load failed|fetch/i.test(message);
+      const privateHost = isPrivateHost(server);
+
+      if (likelyCorsOrNetwork && privateHost) {
+        const warning =
+          "Browser blocked the test request (likely CORS). This is common for local IPs like 192.168.x.x. If your URL and key are correct, continue anyway.";
+        setTestStatus("warning");
+        setTestMessage(warning);
+        setConnectError(warning);
+        return;
+      }
+
+      if (likelyCorsOrNetwork) {
+        const warning =
+          "Network or CORS blocked the browser test. Verify your URL and key; if they are correct, you can continue anyway.";
+        setTestStatus("warning");
+        setTestMessage(warning);
+        setConnectError(warning);
+        return;
+      }
+
+      setTestStatus("error");
+      setTestMessage("Connection test failed.");
+      setConnectError("Couldn't connect right now. Check URL/key and try again.");
     } finally {
       setConnecting(false);
     }
@@ -312,8 +393,21 @@ const Index = () => {
                 onChange={(e) => update({ apiKey: e.target.value })}
                 placeholder="Paste your API key"
               />
-              <p className="text-xs text-muted-foreground">Find this in Immich - Settings - API Keys.</p>
+              <p className="text-xs text-muted-foreground">
+                Immich API keys can be UUID-style or token-style strings.
+              </p>
+              <a
+                href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-primary underline underline-offset-2"
+              >
+                Where do I find my API key?
+              </a>
               {apiKeyError && <p className="text-xs text-destructive">{apiKeyError}</p>}
+              {!apiKeyError && apiKeyWarning && (
+                <p className="text-xs text-mac-yellow">{apiKeyWarning}</p>
+              )}
             </div>
 
             <label className="flex items-center gap-2 text-sm">
@@ -327,6 +421,22 @@ const Index = () => {
             {connectError && (
               <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
                 {connectError}
+              </div>
+            )}
+
+            {testStatus !== "idle" && (
+              <div
+                className={cn(
+                  "flex items-start gap-2 rounded-md border p-3 text-xs",
+                  testStatus === "success" && "border-step-done/30 bg-step-done/10 text-step-done",
+                  testStatus === "warning" && "border-mac-yellow/40 bg-mac-yellow/10 text-foreground",
+                  testStatus === "error" && "border-destructive/30 bg-destructive/10 text-destructive"
+                )}
+              >
+                {testStatus === "success" && <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
+                {testStatus === "warning" && <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />}
+                {testStatus === "error" && <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                <span>{testMessage}</span>
               </div>
             )}
 
