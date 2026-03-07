@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { WizardState, DetectedOS, buildCommand } from "@/lib/command-builder";
+import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import { Copy, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,12 +14,18 @@ const CommandPreview: React.FC<Props> = ({ state, os }) => {
   const [showKey, setShowKey] = useState(false);
 
   const command = buildCommand(state, os);
+  const apiKeyFlags = [FLAG_REGISTRY.apiKey.name, ...(FLAG_REGISTRY.apiKey.alias ?? [])];
+  const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const displayCommand = showKey
     ? command
-    : command.replace(
-        new RegExp(`(-key=)([^\\s\\\\` + "`" + `]+)`, "g"),
-        (_m, prefix) => `${prefix}●●●●●●●●`
+    : apiKeyFlags.reduce(
+        (masked, flag) =>
+          masked.replace(
+            new RegExp(`(${escapeRegex(flag)}=)([^\\s\\\\` + "`" + `]+)`, "g"),
+            (_m, prefix) => `${prefix}●●●●●●●●`
+          ),
+        command
       );
 
   const copyToClipboard = async () => {

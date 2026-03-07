@@ -1,3 +1,5 @@
+import { FLAG_REGISTRY } from "@/lib/flag-registry";
+
 export type DetectedOS = "macos" | "windows" | "linux";
 
 export function detectOS(): DetectedOS {
@@ -104,24 +106,42 @@ export function buildCommand(state: WizardState, os: DetectedOS): string {
   const nl = "\n  ";
 
   const parts: string[] = ["immich-go"];
-  parts.push(`-server=${shellQuote(state.serverUrl, os)}`);
-  parts.push(`-key=${shellQuote(state.apiKey, os)}`);
-  
+  parts.push(`${FLAG_REGISTRY.server.name}=${shellQuote(state.serverUrl, os)}`);
+  parts.push(`${FLAG_REGISTRY.apiKey.name}=${shellQuote(state.apiKey, os)}`);
+
   if (state.adminApiKey) {
-    parts.push(`-admin-key=${shellQuote(state.adminApiKey, os)}`);
+    parts.push(`${FLAG_REGISTRY.adminApiKey.name}=${shellQuote(state.adminApiKey, os)}`);
   }
 
-  parts.push("upload from-folder");
+  parts.push(state.googlePhotos ? "upload from-google-photos" : "upload from-folder");
 
-  if (state.googlePhotos) parts.push("-google-photos");
-  if (state.dryRun) parts.push("-dry-run");
-  if (state.createAlbums) parts.push("-create-albums");
-  if (state.createAlbumFolder) parts.push("-create-album-folder");
-  if (state.ignoreErrors) parts.push("-ignore-errors");
-  if (state.pauseImmichJobs) parts.push("-pause-immich-jobs");
-  if (state.excludeFiles) parts.push(`-exclude-files=${shellQuote(state.excludeFiles, os)}`);
-  if (state.includeFiles) parts.push(`-include-files=${shellQuote(state.includeFiles, os)}`);
-  if (state.dateRange) parts.push(`-date-range=${shellQuote(state.dateRange, os)}`);
+  if (state.dryRun) {
+    parts.push(FLAG_REGISTRY.dryRun.name);
+  }
+  if (state.ignoreErrors) {
+    parts.push(`${FLAG_REGISTRY.onServerErrors.name}=continue`);
+  }
+  parts.push(`${FLAG_REGISTRY.pauseImmichJobs.name}=${state.pauseImmichJobs ? "true" : "false"}`);
+
+  if (state.googlePhotos) {
+    if (!state.createAlbums) {
+      parts.push(`${FLAG_REGISTRY.syncAlbums.name}=false`);
+    }
+  } else if (state.createAlbumFolder) {
+    parts.push(`${FLAG_REGISTRY.folderAsAlbum.name}=PATH`);
+  } else if (state.createAlbums) {
+    parts.push(`${FLAG_REGISTRY.folderAsAlbum.name}=FOLDER`);
+  }
+
+  if (state.excludeFiles) {
+    parts.push(`${FLAG_REGISTRY.excludeExtensions.name}=${shellQuote(state.excludeFiles, os)}`);
+  }
+  if (state.includeFiles) {
+    parts.push(`${FLAG_REGISTRY.includeExtensions.name}=${shellQuote(state.includeFiles, os)}`);
+  }
+  if (state.dateRange) {
+    parts.push(`${FLAG_REGISTRY.dateRange.name}=${shellQuote(state.dateRange, os)}`);
+  }
 
   parts.push(shellQuote(state.folderPath || getPathPlaceholder(os), os));
 
@@ -149,8 +169,8 @@ export function getSummaryItems(state: WizardState): { label: string; value: str
   if (state.googlePhotos) flags.push("Google Photos mode");
   if (flags.length) items.push({ label: "Flags", value: flags.join(", ") });
 
-  if (state.excludeFiles) items.push({ label: "Exclude", value: state.excludeFiles });
-  if (state.includeFiles) items.push({ label: "Include", value: state.includeFiles });
+  if (state.excludeFiles) items.push({ label: "Exclude Extensions", value: state.excludeFiles });
+  if (state.includeFiles) items.push({ label: "Include Extensions", value: state.includeFiles });
   if (state.dateRange) items.push({ label: "Date Range", value: state.dateRange });
 
   return items;
