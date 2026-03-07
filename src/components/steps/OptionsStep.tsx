@@ -123,19 +123,19 @@ const OptionsStep: React.FC<Props> = ({ state, os, onChange, onNext, onBack }) =
         <Label>Advanced Filters</Label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label htmlFor="excludeFiles" className="text-xs">Exclude pattern</Label>
+            <Label htmlFor="excludeFiles" className="text-xs">Exclude extensions</Label>
             <Input
               id="excludeFiles"
-              placeholder="e.g. *.mp4"
+              placeholder="e.g. .mp4,.gif"
               value={state.excludeFiles}
               onChange={(e) => onChange({ excludeFiles: e.target.value })}
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="includeFiles" className="text-xs">Include pattern</Label>
+            <Label htmlFor="includeFiles" className="text-xs">Include extensions</Label>
             <Input
               id="includeFiles"
-              placeholder="e.g. *.jpg"
+              placeholder="e.g. .jpg,.heic"
               value={state.includeFiles}
               onChange={(e) => onChange({ includeFiles: e.target.value })}
             />
