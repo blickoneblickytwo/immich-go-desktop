@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { WizardState } from "@/lib/command-builder";
+import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import { Loader2, CheckCircle2, XCircle, Info } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -73,7 +74,7 @@ const ConnectionStep: React.FC<Props> = ({ state, onChange, onNext }) => {
                 <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent className="max-w-[220px] text-xs">
-                Required only for the <code className="font-mono">-pause-immich-jobs</code> flag if your primary key lacks admin privileges.
+                Required only for the <code className="font-mono">{FLAG_REGISTRY.pauseImmichJobs.name}</code> flag if your primary key lacks admin privileges.
               </TooltipContent>
             </Tooltip>
           </div>
