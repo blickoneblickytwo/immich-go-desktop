@@ -11,6 +11,7 @@ import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import {
   REMEMBER_KEY,
   buildFriendlyCommand,
+  type CommandShell,
   defaultFriendlyState,
   getCommandChecklist,
   getPathLabel,
@@ -18,6 +19,7 @@ import {
   getPresets,
   getRawFlagPreview,
   getSourceLabel,
+  getSupportedShells,
   type FriendlyState,
   type UploadSource,
 } from "@/lib/friendly-flow";
@@ -29,13 +31,17 @@ const stepLabels = ["What to upload", "Connect", "Choose style", "Done"];
 const Index = () => {
   const [step, setStep] = useState(1);
   const [state, setState] = useState<FriendlyState>({ ...defaultFriendlyState });
+  const [platformOverride, setPlatformOverride] = useState<"auto" | "linux" | "macos" | "windows">("auto");
+  const [windowsShell, setWindowsShell] = useState<"windows-powershell" | "windows-cmd">("windows-powershell");
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const [connectError, setConnectError] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [apiKeyError, setApiKeyError] = useState("");
-  const os = detectOS();
+  const detectedOs = useMemo(() => detectOS(), []);
+  const os = platformOverride === "auto" ? detectedOs : platformOverride;
+  const selectedShell: CommandShell = os === "windows" ? windowsShell : "unix";
 
   const update = useCallback((partial: Partial<FriendlyState>) => {
     setState((prev) => ({ ...prev, ...partial }));
@@ -68,9 +74,17 @@ const Index = () => {
   }, []);
 
   const presets = useMemo(() => getPresets(state.source), [state.source]);
-  const command = useMemo(() => buildFriendlyCommand(state, os), [state, os]);
-  const checklist = useMemo(() => getCommandChecklist(state), [state]);
+  const command = useMemo(() => buildFriendlyCommand(state, os, selectedShell), [state, os, selectedShell]);
+  const checklist = useMemo(() => getCommandChecklist(state, os), [state, os]);
   const isDryRun = command.includes(FLAG_REGISTRY.dryRun.name);
+  const shellOptions = useMemo(() => getSupportedShells(os), [os]);
+  const shellLabel = selectedShell === "windows-cmd"
+    ? "Windows CMD"
+    : selectedShell === "windows-powershell"
+      ? "Windows PowerShell"
+      : os === "macos"
+        ? "macOS"
+        : "Linux";
   const speedHint = state.customSpeed === "slow"
     ? "Gentle on your server"
     : state.customSpeed === "fast"
@@ -163,7 +177,7 @@ const Index = () => {
   };
 
   const handleDownloadScript = () => {
-    const ext = os === "windows" ? "ps1" : "sh";
+    const ext = selectedShell === "windows-cmd" ? "cmd" : selectedShell === "windows-powershell" ? "ps1" : "sh";
     const blob = new Blob([`${command}\n`], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -198,6 +212,19 @@ const Index = () => {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <MacWindow>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          <span className="text-xs text-muted-foreground">Platform</span>
+          <select
+            value={platformOverride}
+            onChange={(e) => setPlatformOverride(e.target.value as typeof platformOverride)}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+          >
+            <option value="auto">Auto ({detectedOs})</option>
+            <option value="linux">Linux</option>
+            <option value="macos">macOS</option>
+            <option value="windows">Windows</option>
+          </select>
+        </div>
 
         {step === 1 && (
           <div className="space-y-6">
@@ -549,6 +576,30 @@ const Index = () => {
               {isDryRun
                 ? "🛡️ This is a test run - nothing will upload."
                 : "⚠️ Live mode - files will be uploaded to your server."}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs">
+                Platform: {os}
+              </span>
+              <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs">
+                Shell: {shellLabel}
+              </span>
+              {os === "windows" && (
+                <div className="ml-auto flex gap-2">
+                  {shellOptions.map((shell) => (
+                    <Button
+                      key={shell}
+                      type="button"
+                      size="sm"
+                      variant={selectedShell === shell ? "default" : "outline"}
+                      onClick={() => setWindowsShell(shell as "windows-powershell" | "windows-cmd")}
+                    >
+                      {shell === "windows-powershell" ? "PowerShell" : "CMD"}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="rounded-lg bg-terminal-bg p-4">
