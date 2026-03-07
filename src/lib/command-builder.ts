@@ -3,9 +3,12 @@ import { FLAG_REGISTRY } from "@/lib/flag-registry";
 export type DetectedOS = "macos" | "windows" | "linux";
 
 export function detectOS(): DetectedOS {
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("win")) return "windows";
-  if (ua.includes("mac")) return "macos";
+  const nav = navigator as Navigator & {
+    userAgentData?: { platform?: string };
+  };
+  const platform = (nav.userAgentData?.platform || navigator.platform || navigator.userAgent || "").toLowerCase();
+  if (/win/.test(platform)) return "windows";
+  if (/mac|darwin/.test(platform)) return "macos";
   return "linux";
 }
 
