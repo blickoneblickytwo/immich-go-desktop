@@ -32,7 +32,7 @@ export const defaultState: WizardState = {
   apiKey: "",
   adminApiKey: "",
   folderPath: "",
-  dryRun: false,
+  dryRun: true,
   createAlbums: false,
   createAlbumFolder: false,
   ignoreErrors: false,
@@ -67,7 +67,7 @@ export const presets: Preset[] = [
     apply: {
       googlePhotos: true,
       createAlbums: true,
-      dryRun: false,
+      dryRun: true,
       ignoreErrors: true,
     },
   },
@@ -77,7 +77,7 @@ export const presets: Preset[] = [
     apply: {
       createAlbumFolder: true,
       ignoreErrors: true,
-      dryRun: false,
+      dryRun: true,
       googlePhotos: false,
     },
   },

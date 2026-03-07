@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { WizardState, DetectedOS, getPathPlaceholder, presets } from "@/lib/command-builder";
-import { FolderOpen, AlertTriangle } from "lucide-react";
+import { FolderOpen, AlertTriangle, ShieldCheck } from "lucide-react";
 
 interface Props {
   state: WizardState;
@@ -38,8 +38,15 @@ const OptionsStep: React.FC<Props> = ({ state, os, onChange, onNext, onBack }) =
     onChange(preset.apply);
   };
 
+  const handleDryRunToggle = (enabled: boolean) => {
+    if (!enabled && state.dryRun) {
+      const confirmed = window.confirm("Are you sure? This will upload real files.");
+      if (!confirmed) return;
+    }
+    onChange({ dryRun: enabled });
+  };
+
   const flags: { key: keyof WizardState; label: string; description: string }[] = [
-    { key: "dryRun", label: "Dry Run", description: "Simulate without uploading" },
     { key: "createAlbums", label: "Create Albums", description: "Create albums from folder names" },
     { key: "createAlbumFolder", label: "Album per Folder", description: "One album per sub-folder" },
     { key: "ignoreErrors", label: "Ignore Errors", description: "Continue on file errors" },
@@ -99,6 +106,25 @@ const OptionsStep: React.FC<Props> = ({ state, os, onChange, onNext, onBack }) =
       {/* Flags */}
       <div className="space-y-3">
         <Label>Options</Label>
+        <div className={`rounded-xl border-2 ${state.dryRun ? "border-step-done/60 bg-step-done/10" : "border-destructive/60 bg-destructive/10"}`}>
+          <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className={`w-5 h-5 mt-0.5 ${state.dryRun ? "text-step-done" : "text-destructive"}`} />
+              <div>
+                <div className="text-sm font-semibold text-foreground">Simulation Mode (Recommended)</div>
+                {state.dryRun ? (
+                  <div className="text-xs text-step-done">🛡️ Simulation mode — no files will be uploaded</div>
+                ) : (
+                  <div className="text-xs text-destructive">⚠️ Live mode — files will be uploaded to your server</div>
+                )}
+              </div>
+            </div>
+            <Switch checked={state.dryRun} onCheckedChange={handleDryRunToggle} />
+          </div>
+          <p className="px-4 pb-4 text-xs text-muted-foreground">
+            Run with dry-run first to verify file count, then turn it off for the real upload
+          </p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {flags.map((f) => (
             <label
