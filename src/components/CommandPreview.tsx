@@ -27,6 +27,23 @@ const CommandPreview: React.FC<Props> = ({ state, os }) => {
           ),
         command
       );
+  const dryRunFlag = FLAG_REGISTRY.dryRun.name;
+  const commandWithDryRunHighlight = displayCommand.split(dryRunFlag).reduce<React.ReactNode[]>(
+    (acc, segment, index) => {
+      if (index > 0) {
+        acc.push(
+          <span key={`dry-run-${index}`} className="text-step-done font-semibold">
+            {dryRunFlag}
+          </span>
+        );
+      }
+      if (segment) {
+        acc.push(<React.Fragment key={`segment-${index}`}>{segment}</React.Fragment>);
+      }
+      return acc;
+    },
+    []
+  );
 
   const copyToClipboard = async () => {
     try {
@@ -71,20 +88,21 @@ const CommandPreview: React.FC<Props> = ({ state, os }) => {
           </Button>
         </div>
       </div>
+      <div className={`mx-4 mt-3 rounded-md px-3 py-2 text-xs font-medium ${state.dryRun ? "bg-step-done/10 text-step-done border border-step-done/30" : "bg-destructive/10 text-destructive border border-destructive/30"}`}>
+        {state.dryRun
+          ? "🛡️ DRY RUN — no files will be uploaded"
+          : "⚠️ LIVE MODE — files will be uploaded to your server"}
+      </div>
       {/* Command */}
       <div className="p-4 overflow-x-auto">
         <pre className="text-[13px] font-mono text-foreground whitespace-pre-wrap break-all leading-relaxed">
           <span className="text-muted-foreground select-none">$ </span>
-          {displayCommand}
+          {commandWithDryRunHighlight}
         </pre>
       </div>
-      {state.dryRun && (
-        <div className="px-4 pb-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-step-done bg-step-done/10 rounded-full px-2.5 py-1">
-            🛡️ DRY RUN — no files will be uploaded
-          </span>
-        </div>
-      )}
+      <div className="px-4 pb-3 text-xs text-muted-foreground">
+        Run with dry-run first to verify file count, then turn it off for the real upload
+      </div>
     </div>
   );
 };
