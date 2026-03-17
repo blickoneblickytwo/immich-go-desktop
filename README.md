@@ -8,6 +8,8 @@
 
 Generate safe, copy-paste-ready `immich-go` commands in a guided wizard.
 
+Current immich-go baseline: **v0.31.0** (tracked in [IMMICH_GO_BASELINE.md](./IMMICH_GO_BASELINE.md)).
+
 ## Quick Start
 Open the [live demo](https://immich-go-desktop.pages.dev), pick your source, and copy your command in under a minute.
 
@@ -17,10 +19,10 @@ Open the [live demo](https://immich-go-desktop.pages.dev), pick your source, and
 | --- | --- | --- |
 | First Run Test (dry-run) | First-time setup validation | Uses the `Test run` flow and adds `--dry-run` so nothing uploads. |
 | Google Takeout Standard | Typical Google Photos migration | Select `Google Photos Takeout` + `Standard import` to import everything and recreate albums. |
-| Large Local Library | Big folder/NAS imports | Select `Photos from my computer` + `Organize by folder` (or `Custom`), keep `--on-server-errors=continue`, and run a dry-run first. |
+| Large Local Library | Big folder/NAS imports | Select `Photos from my computer` + `Organize by folder` (or `Custom`), keep `--on-errors=continue`, and run a dry-run first. |
 
 ## Supported Flags
-Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/lib/flag-registry.ts), verified against `immich-go` `v0.27.0` on `2026-03-06`.
+Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/lib/flag-registry.ts), verified against `immich-go` `v0.31.0` on `2026-03-16`.
 
 ### Core (all imports)
 
@@ -29,8 +31,10 @@ Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/li
 | `--admin-api-key` | `string` | `null` | Admin API key for job management operations |
 | `--api-key` | `string` | `null` | Immich API key |
 | `--api-trace` | `boolean` | `false` | Enable API call tracing |
-| `--ban-file` | `file-list` | `@eaDir/`, `@__thumb/`, `SYNOFILE_THUMB_*.*`, `Lightroom Catalog/`, `thumbnails/`, `.DS_Store/`, `/._*`, `.photostructure/` | Exclude files matching patterns; can be passed multiple times |
+| `--ban-file` | `file-list` | `@eaDir/`, `@__thumb/`, `SYNOFILE_THUMB_*.*`, `Lightroom Catalog/`, `thumbnails/`, `.DS_Store`, `/._*`, `.Spotlight-V100/`, `.photostructure/`, `Recently Deleted/` | Exclude files matching patterns; can be passed multiple times |
 | `--client-timeout` | `duration` | `20m0s` | Server call timeout |
+| `--concurrent-tasks` | `number` | `8` | Number of concurrent tasks (1-20) |
+| `--config` | `string` | `./immich-go.yaml` | Path to config file |
 | `--date-range` | `date-range` | `unset` | Only import assets within the specified date range |
 | `--device-uuid` | `string` | `Seans-Mac-mini.local` | Override device UUID |
 | `--dry-run` | `boolean` | `false` | Simulate actions without uploading |
@@ -46,9 +50,10 @@ Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/li
 | `--manage-heic-jpeg` | `enum` | `NoStack` | HEIC/JPEG coupling policy |
 | `--manage-raw-jpeg` | `enum` | `NoStack` | RAW/JPEG coupling policy |
 | `--no-ui` | `boolean` | `false` | Disable terminal UI |
-| `--on-server-errors` | `enum` | `stop` | Behavior when server errors occur (`stop|continue|<n> errors`) |
+| `--on-errors` | `enum` | `stop` | Behavior when errors occur (`stop|continue|<n> errors`) |
 | `--overwrite` | `boolean` | `false` | Overwrite remote files with local versions |
 | `--pause-immich-jobs` | `boolean` | `true` | Pause Immich background jobs during upload |
+| `--save-config` | `boolean` | `false` | Save the current configuration to immich-go.yaml |
 | `--server` | `string` | `null` | Immich server URL |
 | `--session-tag` | `boolean` | `false` | Tag imported assets with `{immich-go}/YYYY-MM-DD HH-MM-SS` |
 | `--skip-verify-ssl` | `boolean` | `false` | Skip SSL certificate verification |
@@ -60,7 +65,6 @@ Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/li
 | Flag | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `--album-path-joiner` | `string` | ` / ` | String used to join folder names when composing album names |
-| `--album-picasa` | `boolean` | `false` | Use Picasa album names from `.picasa.ini` |
 | `--date-from-name` | `boolean` | `true` | Use date from filename when metadata date is unavailable |
 | `--folder-as-album` | `enum` | `NONE` | Map folders to albums using mode `FOLDER` or `PATH` |
 | `--folder-as-tags` | `boolean` | `false` | Use folder structure as tags |
@@ -84,9 +88,17 @@ Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/li
 | `--takeout-tag` | `boolean` | `true` | Tag assets with `{takeout}/takeout-YYYYMMDDTHHMMSSZ` |
 
 ## Compatibility
-- `immich-go` support: verified flag compatibility with `v0.27.0` (last verification: `2026-03-06`).
+- `immich-go` support: verified flag compatibility with `v0.31.0` (last verification: `2026-03-16`).
+- Baseline/version record: [IMMICH_GO_BASELINE.md](./IMMICH_GO_BASELINE.md).
 - Browser support target: current versions of Chrome, Edge, Firefox, and Safari.
 - Tested workflow: `connect -> pick mode -> configure -> copy command` in modern desktop browsers.
+
+## Workflow Updates
+- We now track upstream baseline changes in [IMMICH_GO_BASELINE.md](./IMMICH_GO_BASELINE.md).
+- Use the verification script to snapshot each upstream update:
+  - `scripts/verify-immich-go-baseline.sh /path/to/immich-go YYYY-MM-DD`
+- Script output is stored under `docs/immich-go-verification/<date>/` and should be committed with each baseline bump.
+- Recommended cadence: run this monthly or whenever `simulot/immich-go` publishes a new release.
 
 ## Contributing
 1. Fork the repo and create a branch (`codex/your-change` format works well).
