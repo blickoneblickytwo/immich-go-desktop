@@ -1,119 +1,77 @@
-# immich-go desktop
+# immich-go-desktop
 
-![20-second wizard demo](./screenshots/wizard-flow.gif)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 
-> Replace `screenshots/wizard-flow.gif` with a real 20-second capture of: `connect -> pick mode -> configure -> copy command`.
+![App Preview](social-preview.png)
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Try_it_Now-0ea5e9?logo=cloudflarepages&logoColor=white)](https://immich-go-desktop.pages.dev) [![GitHub Stars](https://img.shields.io/github/stars/blickoneblickytwo/immich-go-desktop?style=flat)](https://github.com/blickoneblickytwo/immich-go-desktop/stargazers) [![No Build Required](https://img.shields.io/badge/No_Build-Required-16a34a)](https://immich-go-desktop.pages.dev) [![Privacy First](https://img.shields.io/badge/Privacy-First-111827)](#privacy)
+**A friendly, no-command-line-needed way to import your photos into Immich.**
 
-Generate safe, copy-paste-ready `immich-go` commands in a guided wizard.
+[Launch the App](https://blickoneblickytwo.github.io/immich-go-desktop/) · [Report a Bug](https://github.com/blickoneblickytwo/immich-go-desktop/issues) · [Request a Feature](https://github.com/blickoneblickytwo/immich-go-desktop/issues)
 
-Current immich-go baseline: **v0.31.0** (tracked in [IMMICH_GO_BASELINE.md](./IMMICH_GO_BASELINE.md)).
+---
 
-## Quick Start
-Open the [live demo](https://immich-go-desktop.pages.dev), pick your source, and copy your command in under a minute.
+## Who is this for?
 
-## Common Presets
+If you've ever opened a terminal to run an immich-go command and immediately felt lost - this is for you.
 
-| Preset | Best for | What it does |
-| --- | --- | --- |
-| First Run Test (dry-run) | First-time setup validation | Uses the `Test run` flow and adds `--dry-run` so nothing uploads. |
-| Google Takeout Standard | Typical Google Photos migration | Select `Google Photos Takeout` + `Standard import` to import everything and recreate albums. |
-| Large Local Library | Big folder/NAS imports | Select `Photos from my computer` + `Organize by folder` (or `Custom`), keep `--on-errors=continue`, and run a dry-run first. |
+I built this while migrating my own photo library. The tool that does the actual importing (immich-go) is great, but figuring out the right command to run is a real barrier if you're not a developer. One wrong flag or a typo in your server URL and things go sideways fast.
 
-## Supported Flags
-Flag compatibility below is generated from [`src/lib/flag-registry.ts`](./src/lib/flag-registry.ts), verified against `immich-go` `v0.31.0` on `2026-03-16`.
+This app removes all of that. You click through a few steps, it builds the command for you, and you paste it into your terminal and run it. That's it.
 
-### Core (all imports)
+---
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--admin-api-key` | `string` | `null` | Admin API key for job management operations |
-| `--api-key` | `string` | `null` | Immich API key |
-| `--api-trace` | `boolean` | `false` | Enable API call tracing |
-| `--ban-file` | `file-list` | `@eaDir/`, `@__thumb/`, `SYNOFILE_THUMB_*.*`, `Lightroom Catalog/`, `thumbnails/`, `.DS_Store`, `/._*`, `.Spotlight-V100/`, `.photostructure/`, `Recently Deleted/` | Exclude files matching patterns; can be passed multiple times |
-| `--client-timeout` | `duration` | `20m0s` | Server call timeout |
-| `--concurrent-tasks` | `number` | `8` | Number of concurrent tasks (1-20) |
-| `--config` | `string` | `./immich-go.yaml` | Path to config file |
-| `--date-range` | `date-range` | `unset` | Only import assets within the specified date range |
-| `--device-uuid` | `string` | `Seans-Mac-mini.local` | Override device UUID |
-| `--dry-run` | `boolean` | `false` | Simulate actions without uploading |
-| `--exclude-extensions` | `extensions` | `none` | Comma-separated extensions to exclude |
-| `--help` | `boolean` | `false` | Show help for the command |
-| `--include-extensions` | `extensions` | `all` | Comma-separated extensions to include |
-| `--include-type` | `enum` | `all` | Single file type to include (`VIDEO` or `IMAGE`) |
-| `--log-file` | `string` | `null` | Write logs to a file |
-| `--log-level` | `string` | `INFO` | Log level (`DEBUG|INFO|WARN|ERROR`) |
-| `--log-type` | `string` | `text` | Log output format |
-| `--manage-burst` | `enum` | `NoStack` | Burst handling policy |
-| `--manage-epson-fastfoto` | `boolean` | `false` | Enable Epson FastFoto handling |
-| `--manage-heic-jpeg` | `enum` | `NoStack` | HEIC/JPEG coupling policy |
-| `--manage-raw-jpeg` | `enum` | `NoStack` | RAW/JPEG coupling policy |
-| `--no-ui` | `boolean` | `false` | Disable terminal UI |
-| `--on-errors` | `enum` | `stop` | Behavior when errors occur (`stop|continue|<n> errors`) |
-| `--overwrite` | `boolean` | `false` | Overwrite remote files with local versions |
-| `--pause-immich-jobs` | `boolean` | `true` | Pause Immich background jobs during upload |
-| `--save-config` | `boolean` | `false` | Save the current configuration to immich-go.yaml |
-| `--server` | `string` | `null` | Immich server URL |
-| `--session-tag` | `boolean` | `false` | Tag imported assets with `{immich-go}/YYYY-MM-DD HH-MM-SS` |
-| `--skip-verify-ssl` | `boolean` | `false` | Skip SSL certificate verification |
-| `--tag` | `string[]` | `[]` | Add one or more tags to imported assets |
-| `--time-zone` | `string` | `null` | Override system time zone |
+## How it works
 
-### Folder import only
+1. Open the [live app](https://blickoneblickytwo.github.io/immich-go-desktop/) - nothing to install
+2. Enter your Immich server URL and API key (there's a test button so you can check it works)
+3. Point it to your photo folder
+4. Toggle any options you want (dry run, skip duplicates, etc.)
+5. Copy the generated command and paste it into your terminal
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--album-path-joiner` | `string` | ` / ` | String used to join folder names when composing album names |
-| `--date-from-name` | `boolean` | `true` | Use date from filename when metadata date is unavailable |
-| `--folder-as-album` | `enum` | `NONE` | Map folders to albums using mode `FOLDER` or `PATH` |
-| `--folder-as-tags` | `boolean` | `false` | Use folder structure as tags |
-| `--ignore-sidecar-files` | `boolean` | `false` | Skip sidecar files |
-| `--into-album` | `string` | `null` | Import all files into a specific album |
-| `--recursive` | `boolean` | `true` | Traverse sub-folders recursively |
+---
 
-### Google Takeout only
+## What it does and doesn't do
 
-| Flag | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `--from-album-name` | `string` | `null` | Import only assets from a specific Google Photos album |
-| `--include-archived` | `boolean` | `true` | Include archived Google Photos assets |
-| `--include-partner` | `boolean` | `true` | Include partner-shared Google Photos assets |
-| `--include-trashed` | `boolean` | `false` | Include trashed Google Photos assets |
-| `--include-unmatched` | `boolean` | `false` | Include assets without matching JSON metadata |
-| `--include-untitled-albums` | `boolean` | `false` | Include photos from untitled albums |
-| `--partner-shared-album` | `string` | `null` | Album to receive partner-shared photos |
-| `--people-tag` | `boolean` | `true` | Tag assets using JSON people metadata as `people/name` |
-| `--sync-albums` | `boolean` | `true` | Create/sync Immich albums from Google Photos albums |
-| `--takeout-tag` | `boolean` | `true` | Tag assets with `{takeout}/takeout-YYYYMMDDTHHMMSSZ` |
+This app **generates the command** for you. The actual importing is still done by immich-go running in your terminal - this just means you never have to write the command yourself.
 
-## Compatibility
-- `immich-go` support: verified flag compatibility with `v0.31.0` (last verification: `2026-03-16`).
-- Baseline/version record: [IMMICH_GO_BASELINE.md](./IMMICH_GO_BASELINE.md).
-- Browser support target: current versions of Chrome, Edge, Firefox, and Safari.
-- Tested workflow: `connect -> pick mode -> configure -> copy command` in modern desktop browsers.
+You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go).
 
-## Workflow Updates
-- We now track upstream baseline changes in [IMMICH_GO_BASELINE.md](./IMMICH_GO_BASELINE.md).
-- Use the verification script to snapshot each upstream update:
-  - `scripts/verify-immich-go-baseline.sh /path/to/immich-go YYYY-MM-DD`
-- Script output is stored under `docs/immich-go-verification/<date>/` and should be committed with each baseline bump.
-- Recommended cadence: run this monthly or whenever `simulot/immich-go` publishes a new release.
+---
 
-## Contributing
-1. Fork the repo and create a branch (`codex/your-change` format works well).
-2. Run locally with `npm i` then `npm run dev`.
-3. Keep changes focused, include screenshots/GIFs for UI updates, and open a PR with before/after context.
-4. Add or update tests when behavior changes (`npm test`).
+## Your data stays private
 
-Start here: [good first issues](https://github.com/blickoneblickytwo/immich-go-desktop/labels/good%20first%20issue)
+Everything runs in your browser. There's no backend, no tracking, and no server that sees your credentials. The only external request this app ever makes is the optional connection test - which pings *your own* Immich server, not ours.
 
-## Privacy
-- No photo, path, or API key data is sent to third-party services.
-- No analytics, tracking pixels, or telemetry are included.
-- No server calls are made by default.
-- The only optional network call is the connection test to your own Immich server (`/api/server/about`) when you click **Continue** on the connect step.
-- If you enable “Remember on this device”, credentials are saved only in your browser `localStorage`.
+---
 
-## Changelog
-See [CHANGELOG.md](./CHANGELOG.md) for release notes.
+## Run it locally (optional)
+
+You don't need to install anything to use the app - just open the link above. But if you want to run it offline:
+
+```bash
+git clone https://github.com/blickoneblickytwo/immich-go-desktop.git
+cd immich-go-desktop
+open index.html
+```
+
+It's plain HTML, CSS, and JavaScript. No build tools, no dependencies.
+
+---
+
+## Want to help?
+
+This is an open source project and contributions are very welcome! A few areas where help would be especially appreciated:
+
+- **Standalone desktop app** - wrapping this into a proper Mac/Windows/Linux app (Electron, Tauri, or similar) so users don't need to touch the terminal at all. If this sounds like something you could help with, please open an issue or reach out.
+- **UI improvements and accessibility**
+- **Support for more immich-go flags**
+- **Testing across different setups**
+
+Even if you just find a bug or have a feature idea, opening an issue is a huge help.
+
+---
+
+## License
+
+MIT - use it however you want.
