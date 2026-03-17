@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 
-![App Preview](public/social-preview.png)
+![App Preview](screenshots/app-preview.png)
 
 **A friendly, no-command-line-needed way to import your photos into Immich.**
 
