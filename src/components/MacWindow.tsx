@@ -14,8 +14,8 @@ const MacWindow: React.FC<MacWindowProps> = ({ children }) => {
           <span className="w-3 h-3 rounded-full bg-mac-yellow" />
           <span className="w-3 h-3 rounded-full bg-mac-green" />
         </div>
-        <span className="flex-1 text-center text-[13px] font-semibold text-muted-foreground select-none">
-          Immich-Go Desktop
+        <span className="flex-1 flex justify-center select-none">
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Go Desktop" className="h-5" />
         </span>
         <div className="w-[52px]" /> {/* spacer to balance dots */}
       </div>
