@@ -140,7 +140,7 @@ function buildRawFlagLines(state: FriendlyState): string[] {
   const lines: string[] = [];
 
   if (isDryRun(state)) lines.push(FLAG_REGISTRY.dryRun.name);
-  lines.push(`${FLAG_REGISTRY.onServerErrors.name}=continue`);
+  lines.push(`${FLAG_REGISTRY.onErrors.name}=continue`);
   lines.push(`${FLAG_REGISTRY.pauseImmichJobs.name}=false`);
 
   if (source === "folder") {
