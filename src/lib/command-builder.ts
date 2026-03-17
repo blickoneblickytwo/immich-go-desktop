@@ -122,7 +122,7 @@ export function buildCommand(state: WizardState, os: DetectedOS): string {
     parts.push(FLAG_REGISTRY.dryRun.name);
   }
   if (state.ignoreErrors) {
-    parts.push(`${FLAG_REGISTRY.onServerErrors.name}=continue`);
+    parts.push(`${FLAG_REGISTRY.onErrors.name}=continue`);
   }
   parts.push(`${FLAG_REGISTRY.pauseImmichJobs.name}=${state.pauseImmichJobs ? "true" : "false"}`);
 

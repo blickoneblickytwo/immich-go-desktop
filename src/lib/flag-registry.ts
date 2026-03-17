@@ -1,11 +1,11 @@
 /**
  * Verified immich-go flag registry.
  *
- * Target CLI: immich-go version 0.27.0
+ * Target CLI: immich-go version 0.31.0
  * Verification commands:
  * - immich-go upload from-folder --help
  * - immich-go upload from-google-photos --help
- * Verification date: 2026-03-06
+ * Verification date: 2026-03-16
  */
 
 export type UploadSource = "folder" | "takeout";
@@ -14,6 +14,7 @@ export type FlagType =
   | "boolean"
   | "string"
   | "string[]"
+  | "number"
   | "duration"
   | "enum"
   | "date-range"
@@ -24,7 +25,7 @@ export interface FlagDefinition {
   name: string;
   alias?: string[];
   type: FlagType;
-  default: string | boolean | string[] | null;
+  default: string | boolean | number | string[] | null;
   description: string;
   appliesTo: FlagAppliesTo;
 }
@@ -37,13 +38,6 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
     description: "String used to join folder names when composing album names",
     appliesTo: "folder",
   },
-  albumPicasa: {
-    name: "--album-picasa",
-    type: "boolean",
-    default: false,
-    description: "Use Picasa album names from .picasa.ini",
-    appliesTo: "folder",
-  },
   banFile: {
     name: "--ban-file",
     type: "file-list",
@@ -53,9 +47,11 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
       "SYNOFILE_THUMB_*.*",
       "Lightroom Catalog/",
       "thumbnails/",
-      ".DS_Store/",
+      ".DS_Store",
       "/._*",
+      ".Spotlight-V100/",
       ".photostructure/",
+      "Recently Deleted/",
     ],
     description: "Exclude files matching patterns; can be passed multiple times",
     appliesTo: "both",
@@ -275,6 +271,20 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
     description: "Server call timeout",
     appliesTo: "both",
   },
+  concurrentTasks: {
+    name: "--concurrent-tasks",
+    type: "number",
+    default: 8,
+    description: "Number of concurrent tasks (1-20)",
+    appliesTo: "both",
+  },
+  config: {
+    name: "--config",
+    type: "string",
+    default: "./immich-go.yaml",
+    description: "Path to config file",
+    appliesTo: "both",
+  },
   deviceUuid: {
     name: "--device-uuid",
     type: "string",
@@ -318,11 +328,11 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
     description: "Disable terminal UI",
     appliesTo: "both",
   },
-  onServerErrors: {
-    name: "--on-server-errors",
+  onErrors: {
+    name: "--on-errors",
     type: "enum",
     default: "stop",
-    description: "Behavior when server errors occur (stop|continue|<n> errors)",
+    description: "Behavior when errors occur (stop|continue|<n> errors)",
     appliesTo: "both",
   },
   overwrite: {
@@ -352,6 +362,13 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
     type: "boolean",
     default: false,
     description: "Skip SSL certificate verification",
+    appliesTo: "both",
+  },
+  saveConfig: {
+    name: "--save-config",
+    type: "boolean",
+    default: false,
+    description: "Save the current configuration to immich-go.yaml",
     appliesTo: "both",
   },
   timeZone: {
