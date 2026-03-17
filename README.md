@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 
-![App Preview](social-preview.png)
+![App Preview](public/social-preview.png)
 
 **A friendly, no-command-line-needed way to import your photos into Immich.**
 
@@ -52,10 +52,11 @@ You don't need to install anything to use the app - just open the link above. Bu
 ```bash
 git clone https://github.com/blickoneblickytwo/immich-go-desktop.git
 cd immich-go-desktop
-open index.html
+npm install
+npm run dev
 ```
 
-It's plain HTML, CSS, and JavaScript. No build tools, no dependencies.
+It's a frontend-only app built with Vite + React.
 
 ---
 
