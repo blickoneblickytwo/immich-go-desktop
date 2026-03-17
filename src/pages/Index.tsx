@@ -289,8 +289,19 @@ const Index = () => {
     update({ preset });
   };
 
+  const bgUrl = `${import.meta.env.BASE_URL}bg.jpg`;
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+    <div
+      className="relative flex min-h-screen flex-col items-center justify-center p-4"
+      style={{
+        backgroundImage: `url(${bgUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <MacWindow>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
         <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
@@ -768,6 +779,9 @@ const Index = () => {
           </div>
         )}
       </MacWindow>
+      <span className="fixed bottom-2 left-3 text-[10px] text-white/60 drop-shadow-sm">
+        Photo by Luca Micheli on Unsplash
+      </span>
     </div>
   );
 };
