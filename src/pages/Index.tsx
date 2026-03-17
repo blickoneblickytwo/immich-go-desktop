@@ -289,7 +289,7 @@ const Index = () => {
     update({ preset });
   };
 
-  const bgUrl = `${import.meta.env.BASE_URL}bg.jpg`;
+  const bgUrl = `${import.meta.env.BASE_URL}luca-micheli-ruWkmt3nU58-unsplash.jpg`;
 
   return (
     <div
