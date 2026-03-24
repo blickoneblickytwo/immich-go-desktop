@@ -100,7 +100,7 @@ function shellQuote(value: string, os: DetectedOS): string {
     return `"${value}"`;
   }
   // Unix: single-quote, escaping existing single quotes
-  if (/^[a-zA-Z0-9_./:@=-]+$/.test(value)) return value;
+  if (/^[a-zA-Z0-9_./:@=*-]+$/.test(value)) return value;
   return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
