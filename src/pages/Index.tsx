@@ -490,6 +490,13 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">
                 Tip: drag the folder/file into Terminal to get the full path, then paste it here.
               </p>
+              {state.source === "takeout" && (
+                <p className="text-xs text-mac-yellow">
+                  Google Takeout exports multiple zip files. Use a wildcard pattern
+                  like <code className="font-mono">takeout-*.zip</code> to include
+                  them all, or point to the folder containing the extracted files.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -515,11 +522,26 @@ const Index = () => {
                           <div className="mt-1 text-xs text-muted-foreground">{preset.hint}</div>
                         )}
                       </div>
-                      {preset.recommended && (
-                        <span className="rounded-full bg-step-done/15 px-2 py-1 text-xs font-medium text-step-done">
-                          recommended
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end gap-1">
+                        {preset.recommended && (
+                          <span className="rounded-full bg-step-done/15 px-2 py-1 text-xs font-medium text-step-done">
+                            recommended
+                          </span>
+                        )}
+                        {preset.id === "test-run" || (preset.id === "custom" && state.customDryRun) ? (
+                          <span className="rounded-full bg-step-done/15 px-2 py-1 text-xs font-medium text-step-done">
+                            dry run
+                          </span>
+                        ) : preset.id !== "custom" ? (
+                          <span className="rounded-full bg-destructive/15 px-2 py-1 text-xs font-medium text-destructive">
+                            live upload
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-destructive/15 px-2 py-1 text-xs font-medium text-destructive">
+                            live upload
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -689,14 +711,14 @@ const Index = () => {
             </div>
 
             <div className={cn(
-              "rounded-md border px-3 py-2 text-sm",
+              "rounded-md border px-3 py-2 text-base font-semibold",
               isDryRun
                 ? "border-step-done/30 bg-step-done/10 text-step-done"
                 : "border-destructive/30 bg-destructive/10 text-destructive"
             )}>
               {isDryRun
-                ? "🛡️ This is a test run - nothing will upload."
-                : "⚠️ Live mode - files will be uploaded to your server."}
+                ? "🛡️ This is a test run — nothing will upload."
+                : "⚠️ Live mode — files will be uploaded to your server."}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -747,14 +769,14 @@ const Index = () => {
               </Button>
             </div>
 
-            <details className="rounded-lg border border-border bg-muted/30 p-3">
-              <summary className="cursor-pointer text-sm font-medium">What does this command do?</summary>
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <div className="text-sm font-medium">What does this command do?</div>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                 {checklist.map((line) => (
                   <li key={line}>• {line}</li>
                 ))}
               </ul>
-            </details>
+            </div>
 
             <div className="text-sm text-muted-foreground">
               Don&apos;t have immich-go installed?{" "}

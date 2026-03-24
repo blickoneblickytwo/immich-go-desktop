@@ -117,16 +117,8 @@ const TAKEOUT_PRESETS: FriendlyPreset[] = [
 function shellQuote(value: string, os: DetectedOS): string {
   if (!value) return '""';
   if (os === "windows") return `"${value}"`;
-  if (/^[a-zA-Z0-9_./:@=-]+$/.test(value)) return value;
+  if (/^[a-zA-Z0-9_./:@=*-]+$/.test(value)) return value;
   return `'${value.replace(/'/g, "'\\''")}'`;
-}
-
-function quotePath(path: string, os: DetectedOS): string {
-  if (os === "windows") {
-    const normalized = path.replace(/\//g, "\\");
-    return `"${normalized.replace(/"/g, '\\"')}"`;
-  }
-  return `"${path.replace(/"/g, '\\"')}"`;
 }
 
 function isDryRun(state: FriendlyState): boolean {
@@ -187,14 +179,14 @@ export function getSourceLabel(source: UploadSource | null): string {
 }
 
 export function getPathLabel(source: UploadSource | null): string {
-  return source === "takeout" ? "Where is your takeout file or folder?" : "Where are your photos?";
+  return source === "takeout" ? "Where are your takeout files?" : "Where are your photos?";
 }
 
 export function getPathPlaceholder(source: UploadSource | null, os: DetectedOS): string {
   if (source === "takeout") {
-    if (os === "windows") return "C:\\Users\\you\\Downloads\\takeout-001.zip";
-    if (os === "linux") return "/home/you/Downloads/takeout-001.zip";
-    return "/Users/you/Downloads/takeout-001.zip";
+    if (os === "windows") return "C:\\Users\\you\\Downloads\\takeout-*.zip";
+    if (os === "linux") return "/home/you/Downloads/takeout-*.zip";
+    return "/Users/you/Downloads/takeout-*.zip";
   }
   if (os === "windows") return "C:\\Users\\you\\Pictures";
   if (os === "linux") return "/home/you/Photos";
@@ -240,7 +232,7 @@ export function buildFriendlyCommand(state: FriendlyState, os: DetectedOS, shell
     }
   }
 
-  parts.push(quotePath(resolvedPath, os));
+  parts.push(shellQuote(resolvedPath, os));
 
   return parts
     .map((part, index) => {
