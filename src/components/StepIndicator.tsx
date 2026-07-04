@@ -10,7 +10,7 @@ interface StepIndicatorProps {
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps, labels }) => {
   return (
-    <div className="flex items-center justify-center gap-3 mb-6">
+    <nav aria-label="Progress" className="flex items-center justify-center gap-3 mb-6">
       {Array.from({ length: totalSteps }, (_, i) => {
         const step = i + 1;
         const isActive = step === currentStep;
@@ -18,10 +18,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps, 
         return (
           <React.Fragment key={step}>
             {i > 0 && (
-              <div className={cn("h-px w-8", isDone ? "bg-step-done" : "bg-step-inactive")} />
+              <div aria-hidden="true" className={cn("h-px w-8", isDone ? "bg-step-done" : "bg-step-inactive")} />
             )}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" aria-current={isActive ? "step" : undefined}>
               <div
+                aria-hidden="true"
                 className={cn(
                   "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors",
                   isDone && "bg-step-done text-primary-foreground",
@@ -31,7 +32,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps, 
               >
                 {isDone ? <Check className="w-3.5 h-3.5" /> : step}
               </div>
+              <span className="sr-only">
+                {`Step ${step}${isDone ? ", completed" : isActive ? ", current" : ""}: ${labels[i]}`}
+              </span>
               <span
+                aria-hidden="true"
                 className={cn(
                   "text-xs font-medium hidden sm:inline",
                   isActive ? "text-foreground" : "text-muted-foreground"
@@ -43,7 +48,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps, 
           </React.Fragment>
         );
       })}
-    </div>
+    </nav>
   );
 };
 
