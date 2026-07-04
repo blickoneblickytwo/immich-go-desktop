@@ -62,6 +62,12 @@ It's a frontend-only app built with Vite + React.
 
 ---
 
+## Recent Updates
+
+Curious about the latest improvements (like the new soft-card UI, iCloud support, and server-to-server migration)? Check out the [Changelog](CHANGELOG.md) for a full list of recent changes.
+
+---
+
 ## Want to help?
 
 This is an open source project and contributions are very welcome! A few areas where help would be especially appreciated:
