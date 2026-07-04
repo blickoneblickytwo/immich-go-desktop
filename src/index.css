@@ -4,51 +4,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 13%;
+    /* Warm off-white background — barely tinted */
+    --background: 40 20% 97%;
+    --foreground: 30 6% 16%;
 
+    /* Card = pure white to pop off the warm background */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
+    --card-foreground: 30 6% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 30 6% 16%;
 
-    --primary: 211 100% 50%;
+    /* Primary = near-black warm neutral → dark neutral buttons (Linear-style) */
+    --primary: 30 6% 16%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 13%;
+    --secondary: 40 12% 92%;
+    --secondary-foreground: 30 6% 16%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
+    /* Muted = warm light gray tile fill */
+    --muted: 40 12% 95%;
+    --muted-foreground: 30 5% 46%;
 
-    --accent: 0 0% 94%;
-    --accent-foreground: 0 0% 13%;
+    --accent: 40 12% 93%;
+    --accent-foreground: 30 6% 16%;
 
     --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 85%;
-    --input: 0 0% 85%;
-    --ring: 211 100% 50%;
+    /* Hairline warm-gray borders */
+    --border: 40 8% 90%;
+    --input: 40 8% 90%;
+    --ring: 24 90% 55%;
 
-    --radius: 0.625rem;
+    /* Bigger, softer radius (Linear/Notion aesthetic) */
+    --radius: 1rem;
 
     --mac-red: 0 80% 55%;
     --mac-yellow: 44 100% 54%;
     --mac-green: 130 58% 46%;
-    --mac-titlebar: 0 0% 96%;
+    --mac-titlebar: 0 0% 100%;      /* title bar = card white */
     --mac-window-bg: 0 0% 100%;
-    --mac-window-border: 0 0% 92%;
-    --mac-window-shadow: 0 0% 0%;
+    --mac-window-border: 40 8% 88%;
+    --mac-window-shadow: 30 10% 8%;
 
     --terminal-bg: 240 6% 10%;
     --terminal-fg: 0 0% 85%;
     --terminal-green: 130 60% 60%;
 
-    --step-active: 211 100% 50%;
+    /* Soft coral / orange accent for active step and selected card */
+    --step-active: 24 90% 55%;
     --step-done: 130 58% 46%;
-    --step-inactive: 0 0% 80%;
+    --step-inactive: 40 8% 82%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
