@@ -35,7 +35,9 @@ This app removes all of that. You click through a few steps, it builds the comma
 
 This app **generates the command** for you. The actual importing is still done by immich-go running in your terminal - this just means you never have to write the command yourself.
 
-You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go).
+It supports the main immich-go import sources: a **folder** on your computer, a **Google Photos Takeout**, an **Apple iCloud export**, and **server-to-server migration** from another **Immich** server.
+
+You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app is verified against **immich-go v0.32.0**.
 
 ---
 

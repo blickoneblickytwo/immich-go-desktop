@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { detectOS } from "@/lib/command-builder";
+import { detectOS } from "@/lib/os";
 import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import {
   REMEMBER_KEY,
@@ -14,19 +14,60 @@ import {
   type CommandShell,
   defaultFriendlyState,
   getCommandChecklist,
+  getCreateAlbumsLabel,
   getPathLabel,
   getPathPlaceholder,
   getPresets,
   getRawFlagPreview,
   getSourceLabel,
   getSupportedShells,
+  sourceUsesPath,
   type FriendlyState,
   type UploadSource,
 } from "@/lib/friendly-flow";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, Folder, Image as ImageIcon, Loader2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Server, XCircle } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
+
+const stepTransition = { duration: 0.18, ease: "easeOut" } as const;
+const stepMotionProps = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: stepTransition,
+};
 
 const stepLabels = ["What to upload", "Connect", "Choose style", "Done"];
+
+const osDisplay: Record<"macos" | "windows" | "linux", string> = {
+  macos: "macOS",
+  windows: "Windows",
+  linux: "Linux",
+};
+
+const sourceOptions: { id: UploadSource; icon: typeof Folder; title: string; subtitle: string }[] = [
+  { id: "folder", icon: Folder, title: "Photos from my computer", subtitle: "A folder of photos on your drive." },
+  { id: "takeout", icon: ImageIcon, title: "Google Photos Takeout", subtitle: "A downloaded Google Takeout zip or folder." },
+  { id: "icloud", icon: Cloud, title: "Apple iCloud export", subtitle: "Photos exported from iCloud / Apple." },
+  { id: "immich", icon: Server, title: "Another Immich server", subtitle: "Migrate assets from a second Immich server." },
+];
 
 type KeyValidationLevel = "ok" | "warn" | "error";
 type TestStatus = "idle" | "success" | "warning" | "error";
@@ -73,6 +114,11 @@ const Index = () => {
   const [serverError, setServerError] = useState("");
   const [apiKeyError, setApiKeyError] = useState("");
   const [apiKeyWarning, setApiKeyWarning] = useState("");
+  const [fromServerError, setFromServerError] = useState("");
+  const [fromApiKeyError, setFromApiKeyError] = useState("");
+  const [pendingLiveAction, setPendingLiveAction] = useState<
+    { type: "preset"; preset: NonNullable<FriendlyState["preset"]> } | { type: "dry-run-off" } | null
+  >(null);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
   const [testMessage, setTestMessage] = useState("");
   const detectedOs = useMemo(() => detectOS(), []);
@@ -108,6 +154,8 @@ const Index = () => {
     setServerError("");
     setApiKeyError("");
     setApiKeyWarning("");
+    setFromServerError("");
+    setFromApiKeyError("");
     setTestStatus("idle");
     setTestMessage("");
   }, []);
@@ -130,16 +178,14 @@ const Index = () => {
       ? "Fastest throughput"
       : "Balanced speed and safety";
 
-  const maskApiKey = (cmd: string) => {
-    if (showKey) return cmd;
-    return cmd.replace(
-      new RegExp(`(${FLAG_REGISTRY.apiKey.name}=)([^\\s\\\\` + "`" + `]+)`, "g"),
-      (_m, prefix) => `${prefix}●●●●●●●●`
-    );
-  };
-
   const highlightedCommand = useMemo(() => {
-    const masked = maskApiKey(command);
+    // Masks both --api-key= (destination) and --from-api-key= (from-immich source).
+    const masked = showKey
+      ? command
+      : command.replace(
+          new RegExp(`(--(?:from-)?api-key=)([^\\s\\\\` + "`" + `]+)`, "g"),
+          (_m, prefix) => `${prefix}●●●●●●●●`
+        );
     const parts = masked.split(FLAG_REGISTRY.dryRun.name);
     return parts.reduce<React.ReactNode[]>((acc, segment, index) => {
       if (index > 0) {
@@ -168,6 +214,8 @@ const Index = () => {
     setServerError("");
     setApiKeyError("");
     setApiKeyWarning("");
+    setFromServerError("");
+    setFromApiKeyError("");
     setConnectError("");
     setTestStatus("idle");
     setTestMessage("");
@@ -186,6 +234,22 @@ const Index = () => {
       blocked = true;
     } else if (keyValidation.level === "warn") {
       setApiKeyWarning(keyValidation.message);
+    }
+    if (state.source === "immich") {
+      const fromServer = state.fromServerUrl.trim();
+      const fromKey = state.fromApiKey.trim();
+      if (!fromServer) {
+        setFromServerError("Enter the source Immich server URL.");
+        blocked = true;
+      } else if (!/^https?:\/\//i.test(fromServer)) {
+        setFromServerError("Don't forget http:// or https:// at the start.");
+        blocked = true;
+      }
+      const fromKeyValidation = validateApiKeyFormat(fromKey);
+      if (fromKeyValidation.level === "error") {
+        setFromApiKeyError(fromKeyValidation.message);
+        blocked = true;
+      }
     }
     if (blocked) return;
 
@@ -283,10 +347,19 @@ const Index = () => {
     if (!preset) return;
     const nextDryRun = presetKeepsDryRun(preset);
     if (isDryRun && !nextDryRun) {
-      const confirmed = window.confirm("Are you sure? This will upload real files.");
-      if (!confirmed) return;
+      setPendingLiveAction({ type: "preset", preset });
+      return;
     }
     update({ preset });
+  };
+  const confirmLiveAction = () => {
+    if (!pendingLiveAction) return;
+    if (pendingLiveAction.type === "preset") {
+      update({ preset: pendingLiveAction.preset });
+    } else {
+      update({ customDryRun: false });
+    }
+    setPendingLiveAction(null);
   };
 
   const bgUrl = `${import.meta.env.BASE_URL}luca-micheli-ruWkmt3nU58-unsplash.jpg`;
@@ -304,22 +377,38 @@ const Index = () => {
     >
       <MacWindow>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
-        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-          <span className="text-xs text-muted-foreground">Platform</span>
-          <select
-            value={platformOverride}
-            onChange={(e) => setPlatformOverride(e.target.value as typeof platformOverride)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-          >
-            <option value="auto">Auto ({detectedOs})</option>
-            <option value="linux">Linux</option>
-            <option value="macos">macOS</option>
-            <option value="windows">Windows</option>
-          </select>
-        </div>
+        {step >= 3 && (
+          <div className="mb-4 flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs font-normal text-muted-foreground hover:text-foreground"
+                >
+                  <Monitor className="h-3.5 w-3.5" />
+                  {osDisplay[os]}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuRadioGroup
+                  value={platformOverride}
+                  onValueChange={(value) => setPlatformOverride(value as typeof platformOverride)}
+                >
+                  <DropdownMenuRadioItem value="auto">Auto ({osDisplay[detectedOs]})</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="macos">macOS</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="windows">Windows</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="linux">Linux</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
+        <AnimatePresence mode="wait" initial={false}>
         {step === 1 && (
-          <div className="space-y-6">
+          <m.div key="step-1" {...stepMotionProps} className="space-y-6">
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">What would you like to upload?</h2>
               <p className="text-sm text-muted-foreground">
@@ -328,38 +417,23 @@ const Index = () => {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => selectSource("folder")}
-                className={cn(
-                  "rounded-xl border p-4 text-left transition-colors",
-                  state.source === "folder"
-                    ? "border-step-active bg-step-active/10"
-                    : "border-border hover:bg-muted/50"
-                )}
-              >
-                <Folder className="mb-3 h-6 w-6 text-step-active" />
-                <div className="font-medium">Photos from my computer</div>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  A folder of photos on your drive.
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => selectSource("takeout")}
-                className={cn(
-                  "rounded-xl border p-4 text-left transition-colors",
-                  state.source === "takeout"
-                    ? "border-step-active bg-step-active/10"
-                    : "border-border hover:bg-muted/50"
-                )}
-              >
-                <ImageIcon className="mb-3 h-6 w-6 text-step-active" />
-                <div className="font-medium">Google Photos Takeout</div>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  A downloaded Google Takeout zip or folder.
-                </div>
-              </button>
+              {sourceOptions.map(({ id, icon: Icon, title, subtitle }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => selectSource(id)}
+                  className={cn(
+                    "rounded-xl border p-4 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985]",
+                    state.source === id
+                      ? "border-step-active bg-step-active/10"
+                      : "border-border hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className="mb-3 h-6 w-6 text-step-active" />
+                  <div className="font-medium">{title}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>
+                </button>
+              ))}
             </div>
 
             <p className="text-sm text-muted-foreground">
@@ -371,38 +445,83 @@ const Index = () => {
                 Continue
               </Button>
             </div>
-          </div>
+          </m.div>
         )}
 
         {step === 2 && (
-          <div className="space-y-5">
+          <m.div key="step-2" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">Connect to your Immich server</h2>
+              <h2 className="text-xl font-semibold">
+                {state.source === "immich" ? "Connect both Immich servers" : "Connect to your Immich server"}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Source: {getSourceLabel(state.source)}
               </p>
             </div>
 
+            {state.source === "immich" && (
+              <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+                <h3 className="text-sm font-medium">Source server (migrate from)</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="from-server-url">Source server address</Label>
+                  <Input
+                    id="from-server-url"
+                    value={state.fromServerUrl}
+                    onChange={(e) => update({ fromServerUrl: e.target.value })}
+                    placeholder="https://old-immich.example.com"
+                    inputMode="url"
+                    autoComplete="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                  {fromServerError && <p className="text-xs text-destructive">{fromServerError}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="from-api-key">Source API key</Label>
+                  <Input
+                    id="from-api-key"
+                    type="password"
+                    value={state.fromApiKey}
+                    onChange={(e) => update({ fromApiKey: e.target.value })}
+                    placeholder="API key for the source server"
+                    autoComplete="off"
+                  />
+                  {fromApiKeyError && <p className="text-xs text-destructive">{fromApiKeyError}</p>}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="server-url">Your server address</Label>
+              <Label htmlFor="server-url">
+                {state.source === "immich" ? "Destination server address" : "Your server address"}
+              </Label>
               <Input
                 id="server-url"
                 value={state.serverUrl}
                 onChange={(e) => update({ serverUrl: e.target.value })}
                 placeholder="https://photos.example.com"
+                inputMode="url"
+                autoComplete="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
               <p className="text-xs text-muted-foreground">This is the URL you use to open Immich.</p>
               {serverError && <p className="text-xs text-destructive">{serverError}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="api-key">Your API key</Label>
+              <Label htmlFor="api-key">
+                {state.source === "immich" ? "Destination API key" : "Your API key"}
+              </Label>
               <Input
                 id="api-key"
                 type="password"
                 value={state.apiKey}
                 onChange={(e) => update({ apiKey: e.target.value })}
                 placeholder="Paste your API key"
+                autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
                 Immich API keys can be UUID-style or token-style strings.
@@ -467,11 +586,11 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </m.div>
         )}
 
         {step === 3 && (
-          <div className="space-y-5">
+          <m.div key="step-3" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">Choose your style</h2>
               <p className="text-sm text-muted-foreground">
@@ -479,25 +598,31 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="input-path">{getPathLabel(state.source)}</Label>
-              <Input
-                id="input-path"
-                value={state.inputPath}
-                onChange={(e) => update({ inputPath: e.target.value })}
-                placeholder={getPathPlaceholder(state.source, os)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Tip: drag the folder/file into Terminal to get the full path, then paste it here.
-              </p>
-              {state.source === "takeout" && (
-                <p className="text-xs text-mac-yellow">
-                  Google Takeout exports multiple zip files. Use a wildcard pattern
-                  like <code className="font-mono">takeout-*.zip</code> to include
-                  them all, or point to the folder containing the extracted files.
+            {sourceUsesPath(state.source) && (
+              <div className="space-y-2">
+                <Label htmlFor="input-path">{getPathLabel(state.source)}</Label>
+                <Input
+                  id="input-path"
+                  value={state.inputPath}
+                  onChange={(e) => update({ inputPath: e.target.value })}
+                  placeholder={getPathPlaceholder(state.source, os)}
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Tip: drag the folder/file into Terminal to get the full path, then paste it here.
                 </p>
-              )}
-            </div>
+                {state.source === "takeout" && (
+                  <p className="text-xs text-mac-yellow">
+                    Google Takeout exports multiple zip files. Use a wildcard pattern
+                    like <code className="font-mono">takeout-*.zip</code> to include
+                    them all, or point to the folder containing the extracted files.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>How should we handle this?</Label>
@@ -508,7 +633,7 @@ const Index = () => {
                     type="button"
                     onClick={() => handlePresetChange(preset.id)}
                     className={cn(
-                      "rounded-xl border p-3 text-left transition-colors",
+                      "rounded-xl border p-3 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985]",
                       selectedPreset === preset.id
                         ? "border-step-active bg-step-active/10"
                         : "border-border hover:bg-muted/50"
@@ -559,8 +684,8 @@ const Index = () => {
                       checked={state.customDryRun}
                       onCheckedChange={(checked) => {
                         if (!checked) {
-                          const confirmed = window.confirm("Are you sure? This will upload real files.");
-                          if (!confirmed) return;
+                          setPendingLiveAction({ type: "dry-run-off" });
+                          return;
                         }
                         update({ customDryRun: checked });
                       }}
@@ -589,14 +714,17 @@ const Index = () => {
                   <p className="text-xs text-muted-foreground">{speedHint}</p>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <Label>Create albums from folders?</Label>
-                  <Switch
-                    checked={state.customCreateAlbums}
-                    onCheckedChange={(checked) => update({ customCreateAlbums: checked })}
-                  />
-                </div>
+                {getCreateAlbumsLabel(state.source) && (
+                  <div className="flex items-center justify-between">
+                    <Label>{getCreateAlbumsLabel(state.source)}</Label>
+                    <Switch
+                      checked={state.customCreateAlbums}
+                      onCheckedChange={(checked) => update({ customCreateAlbums: checked })}
+                    />
+                  </div>
+                )}
 
+                {state.source !== "immich" && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Do you shoot RAW + JPEG?</Label>
@@ -626,6 +754,7 @@ const Index = () => {
                     </div>
                   )}
                 </div>
+                )}
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -693,16 +822,16 @@ const Index = () => {
               </Button>
               <Button
                 onClick={() => setStep(4)}
-                disabled={!state.inputPath.trim() || !state.preset}
+                disabled={(sourceUsesPath(state.source) && !state.inputPath.trim()) || !state.preset}
               >
                 Generate command
               </Button>
             </div>
-          </div>
+          </m.div>
         )}
 
         {step === 4 && (
-          <div className="space-y-5">
+          <m.div key="step-4" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">You&apos;re all set</h2>
               <p className="text-sm text-muted-foreground">
@@ -798,8 +927,29 @@ const Index = () => {
                 Start over
               </Button>
             </div>
-          </div>
+          </m.div>
         )}
+        </AnimatePresence>
+        <AlertDialog
+          open={pendingLiveAction !== null}
+          onOpenChange={(open) => {
+            if (!open) setPendingLiveAction(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Switch to live upload?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This turns off the test run. The generated command will upload real files to your
+                server when you run it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep test run</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmLiveAction}>Switch to live</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </MacWindow>
       <span className="fixed bottom-2 left-3 text-[10px] text-white/60 drop-shadow-sm">
         Photo by Luca Micheli on Unsplash
