@@ -6,7 +6,7 @@ interface MacWindowProps {
 
 const MacWindow: React.FC<MacWindowProps> = ({ children }) => {
   return (
-    <div className="w-full max-w-2xl rounded-xl border border-mac-window-border bg-card shadow-[0_20px_60px_-10px_hsl(var(--mac-window-shadow)/0.25)] overflow-hidden">
+    <div className="w-full max-w-2xl rounded-2xl border border-mac-window-border bg-card shadow-[0_32px_80px_-8px_hsl(var(--mac-window-shadow)/0.14),0_8px_24px_-4px_hsl(var(--mac-window-shadow)/0.08)] overflow-hidden">
       {/* Title Bar */}
       <div className="flex items-center px-4 py-3 bg-mac-titlebar border-b border-mac-window-border">
         <div className="flex items-center gap-2">

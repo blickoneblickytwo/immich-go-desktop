@@ -377,6 +377,8 @@ const Index = () => {
     >
       <MacWindow>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
+        {/* Dashed divider — separates step indicator from step content */}
+        <div className="border-t border-dashed border-border -mx-6 mb-6" />
         {step >= 3 && (
           <div className="mb-4 flex items-center justify-end">
             <DropdownMenu>
@@ -423,10 +425,10 @@ const Index = () => {
                   type="button"
                   onClick={() => selectSource(id)}
                   className={cn(
-                    "rounded-xl border p-4 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985]",
+                    "rounded-xl border p-4 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985] bg-muted/60",
                     state.source === id
                       ? "border-step-active bg-step-active/10"
-                      : "border-border hover:bg-muted/50"
+                      : "border-transparent hover:bg-muted"
                   )}
                 >
                   <Icon className="mb-3 h-6 w-6 text-step-active" />
@@ -440,6 +442,8 @@ const Index = () => {
               Not sure? Most people choose <span className="font-medium text-foreground">Photos from my computer</span>.
             </p>
 
+            {/* Dashed divider above footer */}
+            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
             <div className="flex justify-end">
               <Button onClick={handleSourceContinue} disabled={!state.source}>
                 Continue
@@ -530,7 +534,7 @@ const Index = () => {
                 href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-primary underline underline-offset-2"
+                className="text-xs underline underline-offset-2 text-foreground/70 hover:text-foreground"
               >
                 Where do I find my API key?
               </a>
@@ -570,6 +574,8 @@ const Index = () => {
               </div>
             )}
 
+            {/* Dashed divider above footer */}
+            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
@@ -625,7 +631,8 @@ const Index = () => {
             )}
 
             <div className="space-y-2">
-              <Label>How should we handle this?</Label>
+              {/* Section label — muted xs style like Linear */}
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">How should we handle this?</p>
               <div className="grid gap-2">
                 {presets.map((preset) => (
                   <button
@@ -633,10 +640,10 @@ const Index = () => {
                     type="button"
                     onClick={() => handlePresetChange(preset.id)}
                     className={cn(
-                      "rounded-xl border p-3 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985]",
+                      "rounded-xl border p-3 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985] bg-muted/60",
                       selectedPreset === preset.id
                         ? "border-step-active bg-step-active/10"
-                        : "border-border hover:bg-muted/50"
+                        : "border-transparent hover:bg-muted"
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -658,11 +665,11 @@ const Index = () => {
                             dry run
                           </span>
                         ) : preset.id !== "custom" ? (
-                          <span className="rounded-full bg-destructive/15 px-2 py-1 text-xs font-medium text-destructive">
+                          <span className="rounded-full bg-step-active/15 px-2 py-1 text-xs font-medium text-step-active">
                             live upload
                           </span>
                         ) : (
-                          <span className="rounded-full bg-destructive/15 px-2 py-1 text-xs font-medium text-destructive">
+                          <span className="rounded-full bg-step-active/15 px-2 py-1 text-xs font-medium text-step-active">
                             live upload
                           </span>
                         )}
@@ -816,6 +823,8 @@ const Index = () => {
               </div>
             )}
 
+            {/* Dashed divider above footer */}
+            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(2)}>
                 Back
@@ -899,7 +908,7 @@ const Index = () => {
             </div>
 
             <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <div className="text-sm font-medium">What does this command do?</div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">What does this command do?</p>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                 {checklist.map((line) => (
                   <li key={line}>• {line}</li>
@@ -913,12 +922,14 @@ const Index = () => {
                 href="https://github.com/simulot/immich-go"
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary underline underline-offset-2"
+                className="underline underline-offset-2 text-foreground/70 hover:text-foreground"
               >
                 How to install (takes ~2 minutes)
               </a>
             </div>
 
+            {/* Dashed divider above footer */}
+            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(3)}>
                 Back
