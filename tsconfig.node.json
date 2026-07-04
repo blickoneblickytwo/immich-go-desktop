@@ -1,3 +1,4 @@
+// TypeScript settings for Node-side tooling (vite.config.ts), separate from the app.
 {
   "compilerOptions": {
     "target": "ES2022",

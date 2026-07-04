@@ -1,3 +1,4 @@
+// Vitest config: jsdom environment for React component/unit tests (`npm test`).
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
