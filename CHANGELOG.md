@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- **Redesign (branch `redesign/soft-card-ui`)**: Linear/Notion-style soft card aesthetic.
+  Warm off-white neutral palette, hairline + dashed dividers, muted tile fills, tinted
+  pill badges (coral/orange for "live upload", green for "dry run"), near-black dark
+  neutral primary buttons, bigger soft rounded corners (`--radius: 1rem`), and a more
+  diffuse window shadow. Active step dot and selected-card border/tint now coral-orange
+  via `--step-active` token. All wizard logic, Motion transitions, and copy unchanged.
 - Subtle step transitions (cross-fade) via [Motion](https://motion.dev), loaded through
   `LazyMotion`/`domMin` to keep the bundle impact minimal. Respects the OS "reduce
   motion" setting automatically. Card press feedback uses plain CSS (`active:scale`),
