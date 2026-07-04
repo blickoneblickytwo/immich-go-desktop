@@ -1,14 +1,16 @@
 /**
  * Verified immich-go flag registry.
  *
- * Target CLI: immich-go version 0.31.0
+ * Target CLI: immich-go version 0.32.0
  * Verification commands:
  * - immich-go upload from-folder --help
  * - immich-go upload from-google-photos --help
- * Verification date: 2026-03-16
+ * - immich-go upload from-immich --help
+ * - immich-go upload from-icloud --help
+ * Verification date: 2026-06-25
  */
 
-export type UploadSource = "folder" | "takeout";
+export type UploadSource = "folder" | "takeout" | "immich" | "icloud";
 export type FlagAppliesTo = UploadSource | "both";
 export type FlagType =
   | "boolean"
@@ -241,6 +243,92 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
     default: true,
     description: 'Tag assets with "{takeout}/takeout-YYYYMMDDTHHMMSSZ"',
     appliesTo: "takeout",
+  },
+  // --- from-immich (server-to-server migration) ---
+  fromServer: {
+    name: "--from-server",
+    type: "string",
+    default: null,
+    description: "Source Immich server URL to migrate assets from",
+    appliesTo: "immich",
+  },
+  fromApiKey: {
+    name: "--from-api-key",
+    type: "string",
+    default: null,
+    description: "API key for the source Immich server",
+    appliesTo: "immich",
+  },
+  fromFavorite: {
+    name: "--from-favorite",
+    type: "boolean",
+    default: false,
+    description: "Migrate only favorite assets from the source server",
+    appliesTo: "immich",
+  },
+  fromArchived: {
+    name: "--from-archived",
+    type: "boolean",
+    default: false,
+    description: "Migrate only archived assets from the source server",
+    appliesTo: "immich",
+  },
+  fromTrash: {
+    name: "--from-trash",
+    type: "boolean",
+    default: false,
+    description: "Migrate only trashed assets from the source server",
+    appliesTo: "immich",
+  },
+  fromAlbums: {
+    name: "--from-albums",
+    type: "string[]",
+    default: [],
+    description: "Migrate only assets from the named source albums",
+    appliesTo: "immich",
+  },
+  fromTags: {
+    name: "--from-tags",
+    type: "string[]",
+    default: [],
+    description: "Migrate only assets carrying the given source tags",
+    appliesTo: "immich",
+  },
+  fromDateRange: {
+    name: "--from-date-range",
+    type: "date-range",
+    default: "unset",
+    description: "Migrate only source assets within the given date range",
+    appliesTo: "immich",
+  },
+  fromIncludeExtensions: {
+    name: "--from-include-extensions",
+    type: "extensions",
+    default: "all",
+    description: "Only migrate source assets with these extensions",
+    appliesTo: "immich",
+  },
+  fromExcludeExtensions: {
+    name: "--from-exclude-extensions",
+    type: "extensions",
+    default: "none",
+    description: "Skip source assets with these extensions",
+    appliesTo: "immich",
+  },
+  fromIncludeType: {
+    name: "--from-include-type",
+    type: "enum",
+    default: "all",
+    description: "Migrate only one source type (VIDEO or IMAGE)",
+    appliesTo: "immich",
+  },
+  // --- from-icloud ---
+  memories: {
+    name: "--memories",
+    type: "boolean",
+    default: false,
+    description: "Import iCloud \"Memories\" as albums",
+    appliesTo: "icloud",
   },
   adminApiKey: {
     name: "--admin-api-key",

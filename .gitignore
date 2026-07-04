@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Use a single lockfile (package-lock.json). Ignore other package managers'.
+bun.lock
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
