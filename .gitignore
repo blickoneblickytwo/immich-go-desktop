@@ -18,6 +18,12 @@ bun.lockb
 yarn.lock
 pnpm-lock.yaml
 
+# Private / internal docs
+MONETIZATION_IDEAS.md
+
+# AI tool configs
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
