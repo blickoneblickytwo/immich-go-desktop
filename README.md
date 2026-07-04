@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
+[![GitHub Stars](https://img.shields.io/github/stars/blickoneblickytwo/immich-go-desktop?style=flat)](https://github.com/blickoneblickytwo/immich-go-desktop/stargazers)
+[![immich-go v0.32.0](https://img.shields.io/badge/immich--go-v0.32.0-blue)](https://github.com/simulot/immich-go)
 
 ![App Preview](screenshots/app-preview.png)
 
@@ -24,9 +26,9 @@ This app removes all of that. You click through a few steps, it builds the comma
 ## How it works
 
 1. Open the [live app](https://blickoneblickytwo.github.io/immich-go-desktop/) - nothing to install
-2. Enter your Immich server URL and API key (there's a test button so you can check it works)
-3. Point it to your photo folder
-4. Toggle any options you want (dry run, skip duplicates, etc.)
+2. Pick what you're importing (a folder, a Google Takeout, an iCloud export, or another Immich server)
+3. Enter your Immich server URL and API key (there's a test button so you can check it works)
+4. Point it to your photos and choose how to handle them
 5. Copy the generated command and paste it into your terminal
 
 ---
@@ -35,7 +37,12 @@ This app removes all of that. You click through a few steps, it builds the comma
 
 This app **generates the command** for you. The actual importing is still done by immich-go running in your terminal - this just means you never have to write the command yourself.
 
-It supports the main immich-go import sources: a **folder** on your computer, a **Google Photos Takeout**, an **Apple iCloud export**, and **server-to-server migration** from another **Immich** server.
+It supports the main immich-go import sources:
+
+- 📁 **A folder** on your computer
+- 📦 **A Google Photos Takeout** (zip or extracted folder, with wildcard support)
+- 🍎 **An Apple iCloud export**
+- 🔁 **Another Immich server** — server-to-server migration
 
 You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app is verified against **immich-go v0.32.0**.
 

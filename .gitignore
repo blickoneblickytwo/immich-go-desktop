@@ -23,6 +23,7 @@ MONETIZATION_IDEAS.md
 
 # AI tool configs
 .claude/
+.lovable/
 
 # Editor directories and files
 .vscode/*
