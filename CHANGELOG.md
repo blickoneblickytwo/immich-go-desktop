@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- Generated command was missing the line-continuation character on its first line (the
+  binary), so pasting it into PowerShell, bash, or cmd ran the binary with no arguments and
+  errored on the next line. Every line except the last now carries the continuation.
+  Added a regression test covering all three shells. (Thanks u/atlasxoxo_.)
+
+### Added
+- Option to **skip the connection test** on the Connect step — for servers that aren't
+  reachable from the browser (internal addresses). Builds the command with zero network
+  calls; the API key only ever goes into the generated command text. (Thanks u/apparle.)
+- Command box now scrolls horizontally instead of wrapping, so long commands stay readable.
+  (Thanks u/atlasxoxo_.)
 
 ## [0.2.0] - 2026-07-04
 ### Added
