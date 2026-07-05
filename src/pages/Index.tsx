@@ -108,6 +108,7 @@ const Index = () => {
   const [platformOverride, setPlatformOverride] = useState<"auto" | "linux" | "macos" | "windows">("auto");
   const [windowsShell, setWindowsShell] = useState<"windows-powershell" | "windows-cmd">("windows-powershell");
   const [showKey, setShowKey] = useState(false);
+  const [skipTest, setSkipTest] = useState(false);
   const [copied, setCopied] = useState(false);
   const [connectError, setConnectError] = useState("");
   const [connecting, setConnecting] = useState(false);
@@ -156,6 +157,7 @@ const Index = () => {
     setApiKeyWarning("");
     setFromServerError("");
     setFromApiKeyError("");
+    setSkipTest(false);
     setTestStatus("idle");
     setTestMessage("");
   }, []);
@@ -219,6 +221,42 @@ const Index = () => {
     setConnectError("");
     setTestStatus("idle");
     setTestMessage("");
+
+    // Skip path: no network call at all. Only require the fields the command needs
+    // (server URL + key, and both for a server-to-server migration) — no format
+    // heuristics, no ping. The key never leaves the browser this way.
+    if (skipTest) {
+      let missing = false;
+      if (!server) {
+        setServerError("Enter your Immich server URL.");
+        missing = true;
+      } else if (!/^https?:\/\//i.test(server)) {
+        setServerError("Don't forget http:// or https:// at the start.");
+        missing = true;
+      }
+      if (!key) {
+        setApiKeyError("API key is required.");
+        missing = true;
+      }
+      if (state.source === "immich") {
+        if (!state.fromServerUrl.trim()) {
+          setFromServerError("Enter the source Immich server URL.");
+          missing = true;
+        }
+        if (!state.fromApiKey.trim()) {
+          setFromApiKeyError("Source API key is required.");
+          missing = true;
+        }
+      }
+      if (missing) return;
+      if (state.rememberOnDevice) {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ serverUrl: server, apiKey: key }));
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+      }
+      setStep(3);
+      return;
+    }
 
     let blocked = false;
     if (!server) {
@@ -552,6 +590,20 @@ const Index = () => {
               Remember on this device
             </label>
 
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={skipTest}
+                  onCheckedChange={(checked) => setSkipTest(Boolean(checked))}
+                />
+                Skip the connection test
+              </label>
+              <p className="pl-6 text-xs text-muted-foreground">
+                For servers that aren&apos;t reachable from this browser (e.g. an internal address).
+                Builds the command with no network calls — your key only ever goes into the command text.
+              </p>
+            </div>
+
             {connectError && (
               <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
                 {connectError}
@@ -588,7 +640,7 @@ const Index = () => {
                 )}
                 <Button onClick={validateConnection} disabled={connecting}>
                   {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Continue
+                  {skipTest ? "Skip & continue" : "Continue"}
                 </Button>
               </div>
             </div>
@@ -884,7 +936,7 @@ const Index = () => {
             </div>
 
             <div className="rounded-lg bg-terminal-bg p-4">
-              <pre className="text-sm font-mono text-terminal-fg whitespace-pre-wrap break-all leading-relaxed">
+              <pre className="text-sm font-mono text-terminal-fg overflow-x-auto whitespace-pre leading-relaxed">
                 <span className="text-terminal-green select-none">$ </span>
                 {highlightedCommand}
               </pre>

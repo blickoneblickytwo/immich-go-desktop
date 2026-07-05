@@ -1,3 +1,4 @@
+// TypeScript settings for the app code under src/ (React + vitest globals).
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,

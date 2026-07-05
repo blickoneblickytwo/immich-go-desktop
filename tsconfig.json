@@ -1,3 +1,4 @@
+// Root TypeScript config: project references pointing at the app and Node-tooling configs.
 {
   "compilerOptions": {
     "allowJs": true,
