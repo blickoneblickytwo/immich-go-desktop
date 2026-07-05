@@ -290,9 +290,12 @@ export function buildFriendlyCommand(state: FriendlyState, os: DetectedOS, shell
 
   return parts
     .map((part, index) => {
-      if (index === 0) return part;
-      if (index === parts.length - 1) return nl + part;
-      return nl + part + continuation;
+      // First line has no leading newline; every line except the last needs a
+      // trailing continuation char (incl. the binary — without it the shell ends
+      // the command after the binary name and errors on the next line).
+      const prefix = index === 0 ? "" : nl;
+      const suffix = index === parts.length - 1 ? "" : continuation;
+      return prefix + part + suffix;
     })
     .join("");
 }
