@@ -50,7 +50,16 @@ You'll need immich-go installed to run it. If you haven't installed it yet, foll
 
 ## Your data stays private
 
-Everything runs in your browser. There's no backend, no tracking, and no server that sees your credentials. The only external request this app ever makes is the optional connection test - which pings *your own* Immich server, not ours.
+**Your API key never leaves your browser**, except for one thing: if you click **Test connection**, it's sent straight to the server URL *you* typed in - nowhere else. Skip the test and it isn't sent anywhere at all; it only ever ends up in the command text on your screen.
+
+A few more specifics:
+
+- **No backend.** This is a static page. There's no server behind it, no analytics, no logging - nobody sees what you type, including me.
+- **Local storage only if you ask for it.** Ticking "Remember on this device" saves your server URL and key in your browser's local storage, on your machine. Nothing is uploaded.
+- **Don't take my word for it.** The code is open source (MIT) - read exactly what it does, or open your browser's dev tools, go to the Network tab, and watch while you use it. You'll see nothing go out except that one optional test.
+- **Want zero trust required?** [Run it locally](#run-it-locally-optional) - same code, on your own machine.
+
+The in-app **Settings → Privacy** tab has the same information for quick reference.
 
 ---
 
@@ -66,6 +75,19 @@ npm run dev
 ```
 
 It's a frontend-only app built with Vite + React.
+
+---
+
+## FAQ
+
+**What API key permissions do I need?**
+Easiest: grant your key all permissions when you create it in Immich. If you'd rather scope it down, immich-go's actual minimal set is `asset.read`, `asset.statistics`, `asset.update`, `asset.upload`, `asset.copy`, `asset.delete`, `asset.download`, `album.create`, `album.read`, `albumAsset.create`, `server.about`, `stack.create`, `tag.asset`, `tag.create`, `user.read`. Add `job.create` and `job.read` (on an admin-linked key) only if you want Immich's background jobs paused during upload. See [immich-go discussion #1032](https://github.com/simulot/immich-go/discussions/1032) for the source. This list is also copyable from the in-app **Settings → Help** tab.
+
+**What does "WARNING: N assets did not reach a final state" mean?**
+Usually harmless. It commonly shows up with Google Takeout exports split across multiple zip files, where immich-go's internal bookkeeping counts an asset as "pending" even though it uploaded fine. Check your Immich library first - if your photos are there, you're done. Only dig further if photos are genuinely missing.
+
+**My command didn't paste correctly into PowerShell / cmd / bash.**
+That was a real bug (the generated command was missing its first-line continuation character) and it's fixed. Generate a fresh command with the current version of the app.
 
 ---
 
