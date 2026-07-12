@@ -9,10 +9,23 @@ All notable changes to this project will be documented in this file.
   errored on the next line. Every line except the last now carries the continuation.
   Added a regression test covering all three shells. (Thanks u/atlasxoxo_.)
 
+### Changed
+- The connection test on the Connect step is now **purely informational and never blocks**.
+  Continue always works once the fields the command needs are filled in — no checkbox, no
+  network call required, no "continue anyway" workaround. `Test connection` is a separate,
+  optional button. Directly addresses u/apparle's request (servers unreachable from the
+  browser, or just not wanting to wait on a doomed request) without needing an explicit
+  skip toggle.
+
 ### Added
-- Option to **skip the connection test** on the Connect step — for servers that aren't
-  reachable from the browser (internal addresses). Builds the command with zero network
-  calls; the API key only ever goes into the generated command text. (Thanks u/apparle.)
+- **Settings dialog** (gear icon, top-left of the window) with three tabs: **Privacy** (plain
+  -English explanation of exactly what happens to your API key, plus a "Forget saved
+  credentials" button), **Help** (minimal API-key permissions list with a copy button, and an
+  explanation of the "N assets did not reach a final state" warning), and **About** (version,
+  immich-go baseline, links).
+- Post-run guidance on the final step explaining that the "did not reach a final state"
+  warning is usually harmless. (Thanks u/a1b2c3d45ef6.)
+- In-app link answering "what permissions does my key need?" (Thanks u/tlxxxsracer.)
 - Command box now scrolls horizontally instead of wrapping, so long commands stay readable.
   (Thanks u/atlasxoxo_.)
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import MacWindow from "@/components/MacWindow";
+import SettingsDialog from "@/components/SettingsDialog";
 import StepIndicator from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Server, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Server, Settings, XCircle } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 
 const stepTransition = { duration: 0.18, ease: "easeOut" } as const;
@@ -108,10 +109,10 @@ const Index = () => {
   const [platformOverride, setPlatformOverride] = useState<"auto" | "linux" | "macos" | "windows">("auto");
   const [windowsShell, setWindowsShell] = useState<"windows-powershell" | "windows-cmd">("windows-powershell");
   const [showKey, setShowKey] = useState(false);
-  const [skipTest, setSkipTest] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [connectError, setConnectError] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<"privacy" | "help" | "about">("privacy");
   const [serverError, setServerError] = useState("");
   const [apiKeyError, setApiKeyError] = useState("");
   const [apiKeyWarning, setApiKeyWarning] = useState("");
@@ -151,13 +152,11 @@ const Index = () => {
   const reset = useCallback(() => {
     setState({ ...defaultFriendlyState });
     setStep(1);
-    setConnectError("");
     setServerError("");
     setApiKeyError("");
     setApiKeyWarning("");
     setFromServerError("");
     setFromApiKeyError("");
-    setSkipTest(false);
     setTestStatus("idle");
     setTestMessage("");
   }, []);
@@ -210,7 +209,11 @@ const Index = () => {
     setStep(2);
   };
 
-  const validateConnection = async () => {
+  // Shared field validation for both Continue and Test connection. Format issues
+  // (short key, unusual shape) are surfaced as a soft warning only — the only thing
+  // that actually blocks proceeding is a missing/malformed URL or an empty key,
+  // since the command literally can't be built without them.
+  const requiredFieldsPresent = useCallback(() => {
     const server = state.serverUrl.trim();
     const key = state.apiKey.trim();
     setServerError("");
@@ -218,79 +221,67 @@ const Index = () => {
     setApiKeyWarning("");
     setFromServerError("");
     setFromApiKeyError("");
-    setConnectError("");
-    setTestStatus("idle");
-    setTestMessage("");
 
-    // Skip path: no network call at all. Only require the fields the command needs
-    // (server URL + key, and both for a server-to-server migration) — no format
-    // heuristics, no ping. The key never leaves the browser this way.
-    if (skipTest) {
-      let missing = false;
-      if (!server) {
-        setServerError("Enter your Immich server URL.");
-        missing = true;
-      } else if (!/^https?:\/\//i.test(server)) {
-        setServerError("Don't forget http:// or https:// at the start.");
-        missing = true;
-      }
-      if (!key) {
-        setApiKeyError("API key is required.");
-        missing = true;
-      }
-      if (state.source === "immich") {
-        if (!state.fromServerUrl.trim()) {
-          setFromServerError("Enter the source Immich server URL.");
-          missing = true;
-        }
-        if (!state.fromApiKey.trim()) {
-          setFromApiKeyError("Source API key is required.");
-          missing = true;
-        }
-      }
-      if (missing) return;
-      if (state.rememberOnDevice) {
-        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ serverUrl: server, apiKey: key }));
-      } else {
-        localStorage.removeItem(REMEMBER_KEY);
-      }
-      setStep(3);
-      return;
-    }
-
-    let blocked = false;
+    let missing = false;
     if (!server) {
       setServerError("Enter your Immich server URL.");
-      blocked = true;
+      missing = true;
     } else if (!/^https?:\/\//i.test(server)) {
       setServerError("Don't forget http:// or https:// at the start.");
-      blocked = true;
+      missing = true;
     }
-    const keyValidation = validateApiKeyFormat(key);
-    if (keyValidation.level === "error") {
-      setApiKeyError(keyValidation.message);
-      blocked = true;
-    } else if (keyValidation.level === "warn") {
-      setApiKeyWarning(keyValidation.message);
+    if (!key) {
+      setApiKeyError("API key is required.");
+      missing = true;
+    } else {
+      const keyValidation = validateApiKeyFormat(key);
+      if (keyValidation.level !== "ok") {
+        setApiKeyWarning(keyValidation.message);
+      }
     }
     if (state.source === "immich") {
       const fromServer = state.fromServerUrl.trim();
-      const fromKey = state.fromApiKey.trim();
       if (!fromServer) {
         setFromServerError("Enter the source Immich server URL.");
-        blocked = true;
+        missing = true;
       } else if (!/^https?:\/\//i.test(fromServer)) {
         setFromServerError("Don't forget http:// or https:// at the start.");
-        blocked = true;
+        missing = true;
       }
-      const fromKeyValidation = validateApiKeyFormat(fromKey);
-      if (fromKeyValidation.level === "error") {
-        setFromApiKeyError(fromKeyValidation.message);
-        blocked = true;
+      if (!state.fromApiKey.trim()) {
+        setFromApiKeyError("Source API key is required.");
+        missing = true;
       }
     }
-    if (blocked) return;
+    return !missing;
+  }, [state.serverUrl, state.apiKey, state.source, state.fromServerUrl, state.fromApiKey]);
 
+  const rememberCredentials = useCallback(() => {
+    if (state.rememberOnDevice) {
+      localStorage.setItem(
+        REMEMBER_KEY,
+        JSON.stringify({ serverUrl: state.serverUrl.trim(), apiKey: state.apiKey.trim() })
+      );
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
+    }
+  }, [state.rememberOnDevice, state.serverUrl, state.apiKey]);
+
+  // Continue always works once the fields the command needs are present — the
+  // connection test below is informational only and never gates this.
+  const proceed = () => {
+    if (!requiredFieldsPresent()) return;
+    rememberCredentials();
+    setStep(3);
+  };
+
+  const runConnectionTest = async () => {
+    setTestStatus("idle");
+    setTestMessage("");
+    if (!requiredFieldsPresent()) return;
+
+    const server = state.serverUrl.trim();
+    const key = state.apiKey.trim();
     setConnecting(true);
     try {
       const url = server.replace(/\/+$/, "");
@@ -300,54 +291,38 @@ const Index = () => {
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           setTestStatus("error");
-          setTestMessage("Server reached, but the API key was rejected.");
-          setConnectError("API key rejected by server.");
+          setTestMessage("Server reached, but the API key was rejected. You can still Continue if you're sure it's right.");
           return;
         }
         setTestStatus("error");
-        setTestMessage(`Server responded with HTTP ${response.status}.`);
-        setConnectError(`Connection test failed with HTTP ${response.status}.`);
+        setTestMessage(`Server responded with HTTP ${response.status}. You can still Continue.`);
         return;
       }
 
       setTestStatus("success");
       setTestMessage("Connected successfully.");
-
-      if (state.rememberOnDevice) {
-        localStorage.setItem(
-          REMEMBER_KEY,
-          JSON.stringify({ serverUrl: state.serverUrl.trim(), apiKey: state.apiKey.trim() })
-        );
-      } else {
-        localStorage.removeItem(REMEMBER_KEY);
-      }
-      setStep(3);
+      rememberCredentials();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const likelyCorsOrNetwork = /failed to fetch|networkerror|load failed|fetch/i.test(message);
       const privateHost = isPrivateHost(server);
 
       if (likelyCorsOrNetwork && privateHost) {
-        const warning =
-          "Browser blocked the test request (likely CORS). This is common for local IPs like 192.168.x.x. If your URL and key are correct, continue anyway.";
         setTestStatus("warning");
-        setTestMessage(warning);
-        setConnectError(warning);
+        setTestMessage(
+          "Browser blocked the test request (likely CORS). This is common for local IPs like 192.168.x.x — Continue still works, this check is just informational."
+        );
         return;
       }
 
       if (likelyCorsOrNetwork) {
-        const warning =
-          "Network or CORS blocked the browser test. Verify your URL and key; if they are correct, you can continue anyway.";
         setTestStatus("warning");
-        setTestMessage(warning);
-        setConnectError(warning);
+        setTestMessage("Network or CORS blocked the browser test. Continue still works — this check is just informational.");
         return;
       }
 
       setTestStatus("error");
-      setTestMessage("Connection test failed.");
-      setConnectError("Couldn't connect right now. Check URL/key and try again.");
+      setTestMessage("Couldn't reach the server. You can still Continue if you're sure the URL/key are correct.");
     } finally {
       setConnecting(false);
     }
@@ -417,8 +392,17 @@ const Index = () => {
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
         {/* Dashed divider — separates step indicator from step content */}
         <div className="border-t border-dashed border-border -mx-6 mb-6" />
-        {step >= 3 && (
-          <div className="mb-4 flex items-center justify-end">
+        <div className="mb-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}
+            className="h-7 gap-1.5 px-2 text-xs font-normal text-muted-foreground hover:text-foreground"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Settings
+          </Button>
+          {step >= 3 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -443,8 +427,8 @@ const Index = () => {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        )}
+          )}
+        </div>
 
         <AnimatePresence mode="wait" initial={false}>
         {step === 1 && (
@@ -568,14 +552,23 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">
                 Immich API keys can be UUID-style or token-style strings.
               </p>
-              <a
-                href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs underline underline-offset-2 text-foreground/70 hover:text-foreground"
-              >
-                Where do I find my API key?
-              </a>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                <a
+                  href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs underline underline-offset-2 text-foreground/70 hover:text-foreground"
+                >
+                  Where do I find my API key?
+                </a>
+                <button
+                  type="button"
+                  onClick={() => { setSettingsTab("help"); setSettingsOpen(true); }}
+                  className="text-xs underline underline-offset-2 text-foreground/70 hover:text-foreground"
+                >
+                  What permissions does my key need?
+                </button>
+              </div>
               {apiKeyError && <p className="text-xs text-destructive">{apiKeyError}</p>}
               {!apiKeyError && apiKeyWarning && (
                 <p className="text-xs text-mac-yellow">{apiKeyWarning}</p>
@@ -589,26 +582,6 @@ const Index = () => {
               />
               Remember on this device
             </label>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={skipTest}
-                  onCheckedChange={(checked) => setSkipTest(Boolean(checked))}
-                />
-                Skip the connection test
-              </label>
-              <p className="pl-6 text-xs text-muted-foreground">
-                For servers that aren&apos;t reachable from this browser (e.g. an internal address).
-                Builds the command with no network calls — your key only ever goes into the command text.
-              </p>
-            </div>
-
-            {connectError && (
-              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-                {connectError}
-              </div>
-            )}
 
             {testStatus !== "idle" && (
               <div
@@ -633,15 +606,11 @@ const Index = () => {
                 Back
               </Button>
               <div className="flex gap-2">
-                {connectError && (
-                  <Button variant="outline" onClick={() => setStep(3)}>
-                    Continue anyway
-                  </Button>
-                )}
-                <Button onClick={validateConnection} disabled={connecting}>
+                <Button variant="outline" onClick={runConnectionTest} disabled={connecting}>
                   {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {skipTest ? "Skip & continue" : "Continue"}
+                  Test connection
                 </Button>
+                <Button onClick={proceed}>Continue</Button>
               </div>
             </div>
           </m.div>
@@ -968,6 +937,25 @@ const Index = () => {
               </ul>
             </div>
 
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">After you run it</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                immich-go prints its progress as it goes. When it's done, check your Immich library
+                — if your photos are there, you're all set. A line like{" "}
+                <code className="font-mono text-xs">WARNING: N assets did not reach a final state</code>{" "}
+                is usually harmless (common with multi-part Google Takeout exports) — it doesn't
+                mean anything failed. See{" "}
+                <button
+                  type="button"
+                  onClick={() => { setSettingsTab("help"); setSettingsOpen(true); }}
+                  className="underline underline-offset-2 hover:text-foreground"
+                >
+                  Settings → Help
+                </button>{" "}
+                for more.
+              </p>
+            </div>
+
             <div className="text-sm text-muted-foreground">
               Don&apos;t have immich-go installed?{" "}
               <a
@@ -1014,6 +1002,12 @@ const Index = () => {
           </AlertDialogContent>
         </AlertDialog>
       </MacWindow>
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        tab={settingsTab}
+        onTabChange={setSettingsTab}
+      />
       <span className="fixed bottom-2 left-3 text-[10px] text-white/60 drop-shadow-sm">
         Photo by Luca Micheli on Unsplash
       </span>
