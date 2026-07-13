@@ -50,12 +50,14 @@ You'll need immich-go installed to run it. If you haven't installed it yet, foll
 
 ## Your data stays private
 
-**Your API key never leaves your browser**, except for one thing: if you click **Test connection**, it's sent straight to the server URL *you* typed in - nowhere else. Skip the test and it isn't sent anywhere at all; it only ever ends up in the command text on your screen.
+**You don't even have to type your API key in.** Leave it blank and the generated command contains `YOUR_API_KEY` for you to fill in yourself, in your own terminal - your key never touches this page at all.
+
+If you do enter it, **it never leaves your browser** except for one thing: if you click **Test connection**, it's sent straight to the server URL *you* typed in - nowhere else. Skip the test and it isn't sent anywhere at all; it only ever ends up in the command text on your screen.
 
 A few more specifics:
 
 - **No backend.** This is a static page. There's no server behind it, no analytics, no logging - nobody sees what you type, including me.
-- **Local storage only if you ask for it.** Ticking "Remember on this device" saves your server URL and key in your browser's local storage, on your machine. Nothing is uploaded.
+- **Local storage only if you ask for it.** Ticking "Remember on this device" saves your server URL (and key, if you entered one) in your browser's local storage, on your machine. Nothing is uploaded.
 - **Don't take my word for it.** The code is open source (MIT) - read exactly what it does, or open your browser's dev tools, go to the Network tab, and watch while you use it. You'll see nothing go out except that one optional test.
 - **Want zero trust required?** [Run it locally](#run-it-locally-optional) - same code, on your own machine.
 

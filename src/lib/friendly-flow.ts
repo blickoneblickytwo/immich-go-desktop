@@ -47,6 +47,12 @@ export interface FriendlyState {
 
 export const REMEMBER_KEY = "immich-go-desktop.credentials.v1";
 
+// Shown in the generated command when the corresponding key field is left blank — the
+// key never has to touch this page at all. Uppercase + underscore only, so it's a valid
+// unquoted token on every shell (see shellQuote's safe-charset check below).
+export const API_KEY_PLACEHOLDER = "YOUR_API_KEY";
+export const SOURCE_API_KEY_PLACEHOLDER = "YOUR_SOURCE_API_KEY";
+
 export const defaultFriendlyState: FriendlyState = {
   source: null,
   serverUrl: "",
@@ -266,13 +272,15 @@ export function buildFriendlyCommand(state: FriendlyState, os: DetectedOS, shell
 
   const parts: string[] = [getBinaryName(selectedShell)];
   parts.push(`${FLAG_REGISTRY.server.name}=${shellQuote(state.serverUrl, os)}`);
-  parts.push(`${FLAG_REGISTRY.apiKey.name}=${shellQuote(state.apiKey, os)}`);
+  parts.push(`${FLAG_REGISTRY.apiKey.name}=${shellQuote(state.apiKey.trim() || API_KEY_PLACEHOLDER, os)}`);
   parts.push(getSubcommand(source));
 
   // Server-to-server migrations point at a source server instead of a local path.
   if (source === "immich") {
     parts.push(`${FLAG_REGISTRY.fromServer.name}=${shellQuote(state.fromServerUrl, os)}`);
-    parts.push(`${FLAG_REGISTRY.fromApiKey.name}=${shellQuote(state.fromApiKey, os)}`);
+    parts.push(
+      `${FLAG_REGISTRY.fromApiKey.name}=${shellQuote(state.fromApiKey.trim() || SOURCE_API_KEY_PLACEHOLDER, os)}`
+    );
   }
 
   for (const flag of buildRawFlagLines(state)) {
@@ -310,11 +318,18 @@ export function getCommandChecklist(state: FriendlyState, os: DetectedOS): strin
       ? "Copies real assets between servers"
       : "Uploads real files to your server";
 
+  const usesPlaceholder =
+    !state.apiKey.trim() || (source === "immich" && !state.fromApiKey.trim());
+  const placeholderLine = usesPlaceholder
+    ? [`Contains ${API_KEY_PLACEHOLDER} — swap in your real key before running`]
+    : [];
+
   if (source === "immich") {
     return [
       `Connects to ${state.serverUrl || "your destination Immich server"}`,
       dryLine,
       `Pulls assets from ${state.fromServerUrl || "your source Immich server"}`,
+      ...placeholderLine,
     ];
   }
 
@@ -325,6 +340,7 @@ export function getCommandChecklist(state: FriendlyState, os: DetectedOS): strin
     source === "folder"
       ? `Scans ${resolvedPath} for photos and videos`
       : `Imports from ${resolvedPath}`,
+    ...placeholderLine,
   ];
 }
 
