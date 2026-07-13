@@ -18,6 +18,13 @@ All notable changes to this project will be documented in this file.
   skip toggle.
 
 ### Added
+- **The API key is now optional.** Leave it blank and the generated command contains a
+  `YOUR_API_KEY` placeholder (`YOUR_SOURCE_API_KEY` for server-to-server migrations) to
+  fill in yourself — the key never has to touch this page at all. Server URLs are still
+  required (the command is meaningless without them). `Test connection` still needs a real
+  key, since it can't ping with a placeholder. Step 4 calls out the placeholder with a
+  visible reminder and leaves it unmasked so it's obvious what to replace. The strongest
+  possible answer to u/apparle's original privacy concern.
 - **Settings dialog**, opened via a minimal gear icon in the title bar, with three tabs:
   **Privacy** (plain-English explanation of exactly what happens to your API key, plus a
   "Forget saved credentials" button), **Help** (getting an API key and the minimal

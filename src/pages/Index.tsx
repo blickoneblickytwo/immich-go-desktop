@@ -10,7 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { detectOS } from "@/lib/os";
 import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import {
+  API_KEY_PLACEHOLDER,
   REMEMBER_KEY,
+  SOURCE_API_KEY_PLACEHOLDER,
   buildFriendlyCommand,
   type CommandShell,
   defaultFriendlyState,
@@ -165,6 +167,9 @@ const Index = () => {
   const command = useMemo(() => buildFriendlyCommand(state, os, selectedShell), [state, os, selectedShell]);
   const checklist = useMemo(() => getCommandChecklist(state, os), [state, os]);
   const isDryRun = command.includes(FLAG_REGISTRY.dryRun.name);
+  const missingDestKey = !state.apiKey.trim();
+  const missingSourceKey = state.source === "immich" && !state.fromApiKey.trim();
+  const usesKeyPlaceholder = missingDestKey || missingSourceKey;
   const shellOptions = useMemo(() => getSupportedShells(os), [os]);
   const shellLabel = selectedShell === "windows-cmd"
     ? "Windows CMD"
@@ -180,12 +185,17 @@ const Index = () => {
       : "Balanced speed and safety";
 
   const highlightedCommand = useMemo(() => {
-    // Masks both --api-key= (destination) and --from-api-key= (from-immich source).
+    // Masks both --api-key= (destination) and --from-api-key= (from-immich source) —
+    // but leaves placeholder values (YOUR_API_KEY / YOUR_SOURCE_API_KEY) visible, since
+    // the whole point is that the user can see exactly what to swap in.
     const masked = showKey
       ? command
       : command.replace(
           new RegExp(`(--(?:from-)?api-key=)([^\\s\\\\` + "`" + `]+)`, "g"),
-          (_m, prefix) => `${prefix}●●●●●●●●`
+          (fullMatch, prefix, value) => {
+            if (value === API_KEY_PLACEHOLDER || value === SOURCE_API_KEY_PLACEHOLDER) return fullMatch;
+            return `${prefix}●●●●●●●●`;
+          }
         );
     const parts = masked.split(FLAG_REGISTRY.dryRun.name);
     return parts.reduce<React.ReactNode[]>((acc, segment, index) => {
@@ -209,11 +219,14 @@ const Index = () => {
     setStep(2);
   };
 
-  // Shared field validation for both Continue and Test connection. Format issues
-  // (short key, unusual shape) are surfaced as a soft warning only — the only thing
-  // that actually blocks proceeding is a missing/malformed URL or an empty key,
-  // since the command literally can't be built without them.
-  const requiredFieldsPresent = useCallback(() => {
+  // Shared field validation for both Continue and Test connection. The server URL(s)
+  // are always required — the command is meaningless without them. The API key(s) are
+  // only required when `requireKey` is set (Test connection needs a real key to ping;
+  // Continue doesn't — a blank key becomes a placeholder in the generated command, so
+  // it never has to touch this page at all). Format issues on a non-empty key (short,
+  // unusual shape) are always just a soft warning, never a blocker.
+  const requiredFieldsPresent = useCallback((opts?: { requireKey?: boolean }) => {
+    const requireKey = opts?.requireKey ?? false;
     const server = state.serverUrl.trim();
     const key = state.apiKey.trim();
     setServerError("");
@@ -231,8 +244,10 @@ const Index = () => {
       missing = true;
     }
     if (!key) {
-      setApiKeyError("API key is required.");
-      missing = true;
+      if (requireKey) {
+        setApiKeyError("Enter your key to test the connection, or continue without one.");
+        missing = true;
+      }
     } else {
       const keyValidation = validateApiKeyFormat(key);
       if (keyValidation.level !== "ok") {
@@ -248,8 +263,8 @@ const Index = () => {
         setFromServerError("Don't forget http:// or https:// at the start.");
         missing = true;
       }
-      if (!state.fromApiKey.trim()) {
-        setFromApiKeyError("Source API key is required.");
+      if (!state.fromApiKey.trim() && requireKey) {
+        setFromApiKeyError("Enter your source key to test, or continue without one.");
         missing = true;
       }
     }
@@ -258,9 +273,12 @@ const Index = () => {
 
   const rememberCredentials = useCallback(() => {
     if (state.rememberOnDevice) {
+      const key = state.apiKey.trim();
       localStorage.setItem(
         REMEMBER_KEY,
-        JSON.stringify({ serverUrl: state.serverUrl.trim(), apiKey: state.apiKey.trim() })
+        JSON.stringify(
+          key ? { serverUrl: state.serverUrl.trim(), apiKey: key } : { serverUrl: state.serverUrl.trim() }
+        )
       );
     } else {
       localStorage.removeItem(REMEMBER_KEY);
@@ -278,7 +296,7 @@ const Index = () => {
   const runConnectionTest = async () => {
     setTestStatus("idle");
     setTestMessage("");
-    if (!requiredFieldsPresent()) return;
+    if (!requiredFieldsPresent({ requireKey: true })) return;
 
     const server = state.serverUrl.trim();
     const key = state.apiKey.trim();
@@ -495,7 +513,9 @@ const Index = () => {
                   {fromServerError && <p className="text-xs text-destructive">{fromServerError}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="from-api-key">Source API key</Label>
+                  <Label htmlFor="from-api-key">
+                    Source API key <span className="font-normal text-muted-foreground">(optional)</span>
+                  </Label>
                   <Input
                     id="from-api-key"
                     type="password"
@@ -504,6 +524,9 @@ const Index = () => {
                     placeholder="API key for the source server"
                     autoComplete="off"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank for a <code className="font-mono">{SOURCE_API_KEY_PLACEHOLDER}</code> placeholder.
+                  </p>
                   {fromApiKeyError && <p className="text-xs text-destructive">{fromApiKeyError}</p>}
                 </div>
               </div>
@@ -530,7 +553,8 @@ const Index = () => {
 
             <div className="space-y-2">
               <Label htmlFor="api-key">
-                {state.source === "immich" ? "Destination API key" : "Your API key"}
+                {state.source === "immich" ? "Destination API key" : "Your API key"}{" "}
+                <span className="font-normal text-muted-foreground">(optional)</span>
               </Label>
               <Input
                 id="api-key"
@@ -541,7 +565,9 @@ const Index = () => {
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                Immich API keys can be UUID-style or token-style strings.
+                Leave this blank and the command will contain{" "}
+                <code className="font-mono">{API_KEY_PLACEHOLDER}</code> for you to swap in
+                yourself — your key never has to touch this page at all.
               </p>
               <div className="flex flex-wrap gap-x-3 gap-y-1">
                 <a
@@ -894,6 +920,21 @@ const Index = () => {
                 </div>
               )}
             </div>
+
+            {usesKeyPlaceholder && (
+              <div className="flex items-start gap-2 rounded-md border border-mac-yellow/40 bg-mac-yellow/10 p-3 text-xs text-foreground">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Replace{" "}
+                  <code className="font-mono">
+                    {missingDestKey ? API_KEY_PLACEHOLDER : ""}
+                    {missingDestKey && missingSourceKey ? " and " : ""}
+                    {missingSourceKey ? SOURCE_API_KEY_PLACEHOLDER : ""}
+                  </code>{" "}
+                  with your real key{missingDestKey && missingSourceKey ? "s" : ""} before running.
+                </span>
+              </div>
+            )}
 
             <div className="rounded-lg bg-terminal-bg p-4">
               <pre className="text-sm font-mono text-terminal-fg overflow-x-auto whitespace-pre leading-relaxed">

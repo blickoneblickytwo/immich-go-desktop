@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { REMEMBER_KEY } from "@/lib/friendly-flow";
+import { API_KEY_PLACEHOLDER, REMEMBER_KEY } from "@/lib/friendly-flow";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
@@ -95,11 +95,16 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
             <div className="space-y-2">
               <p className="font-medium">Where your API key goes</p>
               <p className="text-muted-foreground">
-                Your key never leaves your browser except for one thing: if you click{" "}
-                <span className="font-medium text-foreground">Test connection</span>, it's sent
+                You don't have to enter it at all — leave the field blank and the generated
+                command contains <code className="font-mono">{API_KEY_PLACEHOLDER}</code> for you
+                to fill in yourself later. Your key never touches this page.
+              </p>
+              <p className="text-muted-foreground">
+                If you do enter it, it only leaves your browser for one thing: clicking{" "}
+                <span className="font-medium text-foreground">Test connection</span> sends it
                 straight to the server URL <span className="font-medium text-foreground">you</span>{" "}
-                typed in — nowhere else. If you skip the test, it isn't sent anywhere at all; it
-                only ends up in the command text on your screen.
+                typed in — nowhere else. Skip the test and it isn't sent anywhere; it just ends up
+                in the command text on your screen.
               </p>
             </div>
             <div className="space-y-2">
@@ -168,6 +173,12 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
                 Also add <code className="font-mono">job.create</code> and{" "}
                 <code className="font-mono">job.read</code> (on an admin-linked key) if you want
                 Immich background jobs paused during upload.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Don't want to type your key into a browser at all? Leave the field blank on the
+                Connect step — the command will contain{" "}
+                <code className="font-mono">{API_KEY_PLACEHOLDER}</code> for you to fill in
+                yourself before running it.
               </p>
             </div>
 
