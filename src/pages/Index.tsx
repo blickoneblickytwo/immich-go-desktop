@@ -44,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Server, Settings, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Server, XCircle } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 
 const stepTransition = { duration: 0.18, ease: "easeOut" } as const;
@@ -388,21 +388,12 @@ const Index = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      <MacWindow>
+      <MacWindow onSettingsClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
         {/* Dashed divider — separates step indicator from step content */}
         <div className="border-t border-dashed border-border -mx-6 mb-6" />
-        <div className="mb-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}
-            className="h-7 gap-1.5 px-2 text-xs font-normal text-muted-foreground hover:text-foreground"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            Settings
-          </Button>
-          {step >= 3 && (
+        {step >= 3 && (
+          <div className="mb-4 flex items-center justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -427,8 +418,8 @@ const Index = () => {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
+          </div>
+        )}
 
         <AnimatePresence mode="wait" initial={false}>
         {step === 1 && (
