@@ -86,9 +86,6 @@ Easiest: grant your key all permissions when you create it in Immich. If you'd r
 **What does "WARNING: N assets did not reach a final state" mean?**
 Usually harmless. It commonly shows up with Google Takeout exports split across multiple zip files, where immich-go's internal bookkeeping counts an asset as "pending" even though it uploaded fine. Check your Immich library first - if your photos are there, you're done. Only dig further if photos are genuinely missing.
 
-**My command didn't paste correctly into PowerShell / cmd / bash.**
-That was a real bug (the generated command was missing its first-line continuation character) and it's fixed. Generate a fresh command with the current version of the app.
-
 ---
 
 ## Recent Updates

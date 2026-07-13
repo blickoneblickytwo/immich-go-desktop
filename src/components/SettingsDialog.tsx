@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { REMEMBER_KEY } from "@/lib/friendly-flow";
-import { Check, Copy, ShieldCheck } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
 const APP_VERSION = "0.2.0";
@@ -78,10 +78,7 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-step-active" />
-            Settings
-          </DialogTitle>
+          <DialogTitle>Settings</DialogTitle>
           <DialogDescription className="sr-only">
             Privacy details, help, and information about this app.
           </DialogDescription>
@@ -141,10 +138,19 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
 
           <TabsContent value="help" className="space-y-4 text-sm">
             <div className="space-y-2">
-              <p className="font-medium">What permissions does my API key need?</p>
+              <p className="font-medium">Getting an API key</p>
               <p className="text-muted-foreground">
-                Easiest: grant your key all permissions when you create it in Immich. If you'd
-                rather scope it down, this is the minimal set immich-go actually uses:
+                Create one from your Immich account settings — see the{" "}
+                <a
+                  href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2 hover:text-foreground"
+                >
+                  Immich docs
+                </a>{" "}
+                for the exact steps. Easiest: grant it all permissions. If you'd rather scope it
+                down, this is the minimal set immich-go actually uses:
               </p>
               <div className="rounded-lg border border-border bg-muted/30 p-3">
                 <ul className="flex flex-wrap gap-1.5 font-mono text-xs">
@@ -166,21 +172,25 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
             </div>
 
             <div className="space-y-2">
-              <p className="font-medium">"WARNING: N assets did not reach a final state"</p>
+              <p className="font-medium">The connection test</p>
               <p className="text-muted-foreground">
-                Usually harmless. It commonly shows up with Google Takeout exports split across
-                multiple zip files, where immich-go's bookkeeping counts an asset as "pending" even
-                though it uploaded fine. Check your Immich library first — if your photos are
-                there, you're done. Only dig further if photos are genuinely missing.
+                Clicking <span className="font-medium text-foreground">Test connection</span> pings
+                your server URL to check it's reachable and the key is accepted. It's purely
+                informational — it never blocks Continue. If it fails on a server that's on your
+                local network or a VPN, that's usually the browser blocking the request (CORS), not
+                a problem with your URL or key. It's safe to ignore and continue.
               </p>
             </div>
 
             <div className="space-y-2">
-              <p className="font-medium">My command didn't work when I pasted it</p>
+              <p className="font-medium">Reading immich-go's output</p>
               <p className="text-muted-foreground">
-                This was a real bug (missing line-continuation on the first line) that's since been
-                fixed. Generate a fresh command from the current version of the app and it should
-                paste and run correctly in PowerShell, cmd, or bash.
+                immich-go prints its progress in the terminal as it goes. When it's done, check
+                your Immich library — if your photos are there, you're done. A line like{" "}
+                <code className="font-mono text-xs">WARNING: N assets did not reach a final state</code>{" "}
+                is usually harmless; it commonly shows up with Google Takeout exports split across
+                multiple zip files, where immich-go's bookkeeping counts an asset as "pending" even
+                though it uploaded fine. Only dig further if photos are genuinely missing.
               </p>
             </div>
           </TabsContent>

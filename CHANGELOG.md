@@ -18,14 +18,15 @@ All notable changes to this project will be documented in this file.
   skip toggle.
 
 ### Added
-- **Settings dialog** (gear icon, top-left of the window) with three tabs: **Privacy** (plain
-  -English explanation of exactly what happens to your API key, plus a "Forget saved
-  credentials" button), **Help** (minimal API-key permissions list with a copy button, and an
-  explanation of the "N assets did not reach a final state" warning), and **About** (version,
-  immich-go baseline, links).
-- Post-run guidance on the final step explaining that the "did not reach a final state"
-  warning is usually harmless. (Thanks u/a1b2c3d45ef6.)
-- In-app link answering "what permissions does my key need?" (Thanks u/tlxxxsracer.)
+- **Settings dialog**, opened via a minimal gear icon in the title bar, with three tabs:
+  **Privacy** (plain-English explanation of exactly what happens to your API key, plus a
+  "Forget saved credentials" button), **Help** (getting an API key and the minimal
+  permissions immich-go needs, what the connection test does and why it can fail on
+  internal/private servers, and how to read immich-go's output including the "N assets did
+  not reach a final state" warning), and **About** (version, immich-go baseline, links).
+  (Prompted by u/tlxxxsracer's and u/a1b2c3d45ef6's questions.)
+- Post-run guidance on the final step pointing to the Help tab for reading immich-go's
+  output.
 - Command box now scrolls horizontally instead of wrapping, so long commands stay readable.
   (Thanks u/atlasxoxo_.)
 
