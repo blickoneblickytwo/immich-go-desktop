@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-07-14
 ### Fixed
 - Generated command was missing the line-continuation character on its first line (the
   binary), so pasting it into PowerShell, bash, or cmd ran the binary with no arguments and
