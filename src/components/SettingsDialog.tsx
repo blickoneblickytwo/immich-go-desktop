@@ -11,7 +11,7 @@ import { API_KEY_PLACEHOLDER, REMEMBER_KEY } from "@/lib/friendly-flow";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.3.0";
 const IMMICH_GO_BASELINE = "v0.32.0";
 
 const MINIMAL_PERMISSIONS = [

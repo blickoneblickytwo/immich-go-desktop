@@ -27,7 +27,7 @@ This app removes all of that. You click through a few steps, it builds the comma
 
 1. Open the [live app](https://blickoneblickytwo.github.io/immich-go-desktop/) - nothing to install
 2. Pick what you're importing (a folder, a Google Takeout, an iCloud export, or another Immich server)
-3. Enter your Immich server URL and API key (there's a test button so you can check it works)
+3. Enter your Immich server URL - your API key is **optional** (there's a test button, or skip it and fill your key in later, in your own terminal)
 4. Point it to your photos and choose how to handle them
 5. Copy the generated command and paste it into your terminal
 
@@ -45,6 +45,8 @@ It supports the main immich-go import sources:
 - 🔁 **Another Immich server** — server-to-server migration
 
 You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app is verified against **immich-go v0.32.0**.
+
+The gear icon in the title bar opens **Settings**, with Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
 
 ---
 
@@ -92,7 +94,7 @@ Usually harmless. It commonly shows up with Google Takeout exports split across 
 
 ## Recent Updates
 
-Curious about the latest improvements (like the new soft-card UI, iCloud support, and server-to-server migration)? Check out the [Changelog](CHANGELOG.md) for a full list of recent changes.
+Curious about the latest improvements (like the fully optional API key, the new Settings dialog, and a connection test that never blocks you)? Check out the [Changelog](CHANGELOG.md) for a full list of recent changes.
 
 ---
 
