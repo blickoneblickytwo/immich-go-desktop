@@ -4,6 +4,7 @@
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 [![GitHub Stars](https://img.shields.io/github/stars/blickoneblickytwo/immich-go-desktop?style=flat)](https://github.com/blickoneblickytwo/immich-go-desktop/stargazers)
 [![immich-go v0.32.0](https://img.shields.io/badge/immich--go-v0.32.0-blue)](https://github.com/simulot/immich-go)
+[![Immich v3.1.0](https://img.shields.io/badge/Immich-v3.1.0%20compatible-4F46E5)](https://github.com/immich-app/immich)
 
 ![App Preview](screenshots/app-preview.png)
 
@@ -44,7 +45,7 @@ It supports the main immich-go import sources:
 - 🍎 **An Apple iCloud export**
 - 🔁 **Another Immich server** — server-to-server migration
 
-You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app is verified against **immich-go v0.32.0**.
+You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app is verified against **immich-go v0.32.0** and works with **Immich v3.1.0** (the current release) — the commands it generates and the optional connection test are both unaffected by the v3.1 update.
 
 The gear icon in the title bar opens **Settings**, with Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
 

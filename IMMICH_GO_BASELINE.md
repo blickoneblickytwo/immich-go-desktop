@@ -43,3 +43,4 @@ This file tracks the exact upstream `immich-go` version used to verify command/f
 | 2026-03-06 | `v0.27.0` | Initial verified registry committed in this repo. |
 | 2026-03-16 | `v0.31.0` | Updated for `--on-errors`, new global flags (`--concurrent-tasks`, `--config`, `--save-config`), updated `--ban-file` defaults, removed `--album-picasa`. |
 | 2026-06-25 | `v0.32.0` | Doc-verified bump (Immich v3.0.0 compat). Added `from-immich`/`from-icloud` sources and their flags (`--from-*`, `--memories`). Binary artifact capture still pending. |
+| 2026-07-30 | `v0.32.0` | Re-verified against **Immich v3.1.0** (no immich-go release since v0.32.0, so no registry changes). Checked Immich's v3.1.0 OpenAPI spec: `GET /server/about` still present and still accepts `api_key` auth, and all 17 API-key permissions documented in the Help tab are still valid in the spec's `Permission` enum. Spec/doc verification only — binary artifact capture still pending. |
