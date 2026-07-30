@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Changed
+- Documented compatibility with **Immich v3.1.0**. No code changes were needed: immich-go
+  is still at v0.32.0 (so generated commands are unchanged), and the app's only Immich API
+  call — the optional `GET /api/server/about` connection test — plus every API-key
+  permission listed in Settings → Help were all re-verified against Immich's v3.1.0
+  OpenAPI spec.
 
 ## [0.3.0] - 2026-07-14
 ### Fixed
