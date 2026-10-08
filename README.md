@@ -4,7 +4,7 @@
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 [![GitHub Stars](https://img.shields.io/github/stars/blickoneblickytwo/immich-go-desktop?style=flat)](https://github.com/blickoneblickytwo/immich-go-desktop/stargazers)
 [![immich-go v0.32.0](https://img.shields.io/badge/immich--go-v0.32.0-blue)](https://github.com/simulot/immich-go)
-[![Immich v3.1.0](https://img.shields.io/badge/Immich-v3.1.0%20compatible-4F46E5)](https://github.com/immich-app/immich)
+[![Immich v3.3.0 API checked](https://img.shields.io/badge/Immich-v3.3.0%20API%20checked-4F46E5)](https://github.com/immich-app/immich/releases/tag/v3.3.0)
 
 ![App Preview](screenshots/app-preview.png)
 
@@ -45,7 +45,7 @@ It supports the main immich-go import sources:
 - 🍎 **An Apple iCloud export**
 - 🔁 **Another Immich server** — server-to-server migration
 
-You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app is verified against **immich-go v0.32.0** and works with **Immich v3.1.0** (the current release) — the commands it generates and the optional connection test are both unaffected by the v3.1 update.
+You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app targets **immich-go v0.32.0**. On October 8, 2026, its generated flags were checked against the upstream command documentation and its optional connection-test endpoint was checked against the **Immich v3.3.0** OpenAPI specification. No integration changes were indicated by those checks; a live photo import against v3.3.0 has not been tested. See [the verification baseline](IMMICH_GO_BASELINE.md) for the evidence and remaining binary-verification work.
 
 The gear icon in the title bar opens **Settings**, with Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
 
@@ -80,6 +80,10 @@ npm run dev
 ```
 
 It's a frontend-only app built with Vite + React.
+
+Use **Node.js 24 LTS** for local development. The development server listens on `127.0.0.1` by default.
+
+The Tailwind CSS 4 build targets modern browsers: Safari 16.4+, Chrome 111+, and Firefox 128+.
 
 ---
 

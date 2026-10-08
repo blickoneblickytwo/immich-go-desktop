@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Changed
+- Updated Vite to the supported 6.4 release line, Vitest to 4.1, and Tailwind CSS to 4.3 with its PostCSS plugin to address current dependency advisories. Preserved the existing Tailwind theme configuration.
+- Refreshed compatible transitive dependencies and browser-support data, and updated React Router to the patched 7.18 release line.
+- Updated CI and GitHub Pages builds to Node.js 24 LTS and restricted the local development server to loopback by default.
+- Refreshed compatibility documentation for Immich v3.3.0, explicitly distinguishing API/documentation checks from a live photo-import test.
 - Documented compatibility with **Immich v3.1.0**. No code changes were needed: immich-go
   is still at v0.32.0 (so generated commands are unchanged), and the app's only Immich API
   call — the optional `GET /api/server/about` connection test — plus every API-key

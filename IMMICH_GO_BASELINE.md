@@ -5,6 +5,7 @@ This file tracks the exact upstream `immich-go` version used to verify command/f
 ## Current Baseline
 - Upstream repo: [simulot/immich-go](https://github.com/simulot/immich-go)
 - Target version: `v0.32.0`
+- Latest compatibility review: `2026-10-08`, against Immich `v3.3.0` (documentation/specification review; no live import).
 - Verified on: `2026-06-25`
 - Verification method: **upstream documentation + release notes** (not a binary capture).
   Flags for the new `from-immich` and `from-icloud` sources were sourced
@@ -44,3 +45,4 @@ This file tracks the exact upstream `immich-go` version used to verify command/f
 | 2026-03-16 | `v0.31.0` | Updated for `--on-errors`, new global flags (`--concurrent-tasks`, `--config`, `--save-config`), updated `--ban-file` defaults, removed `--album-picasa`. |
 | 2026-06-25 | `v0.32.0` | Doc-verified bump (Immich v3.0.0 compat). Added `from-immich`/`from-icloud` sources and their flags (`--from-*`, `--memories`). Binary artifact capture still pending. |
 | 2026-07-30 | `v0.32.0` | Re-verified against **Immich v3.1.0** (no immich-go release since v0.32.0, so no registry changes). Checked Immich's v3.1.0 OpenAPI spec: `GET /server/about` still present and still accepts `api_key` auth, and all 17 API-key permissions documented in the Help tab are still valid in the spec's `Permission` enum. Spec/doc verification only — binary artifact capture still pending. |
+| 2026-10-08 | `v0.32.0` | Upstream's latest release remains v0.32.0. Checked generated options against the [tagged upload command reference](https://github.com/simulot/immich-go/blob/v0.32.0/docs/commands/upload.md). Checked the [Immich v3.3.0 OpenAPI spec](https://github.com/immich-app/immich/blob/v3.3.0/open-api/immich-openapi-specs.json): `GET /server/about` still accepts API-key auth and requires `server.about`. No integration change indicated. This is documentation/specification verification, not a live-import test; binary capture remains pending. |

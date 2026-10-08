@@ -1,7 +1,6 @@
-// PostCSS pipeline: Tailwind CSS + Autoprefixer (runs during the Vite build).
+// Tailwind CSS 4 handles imports and vendor prefixes in its PostCSS plugin.
 export default {
   plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
+    "@tailwindcss/postcss": {},
   },
 };

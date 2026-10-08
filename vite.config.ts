@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   base: mode === "production" ? "/immich-go-desktop/" : "/",
   server: {
-    host: "::",
+    host: "127.0.0.1",
     port: 8080,
     hmr: {
       overlay: false,
