@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Changed
+- Refined the wizard around the original soft-gradient reference: pale neutral canvas, inset orange gradient, quieter progress navigation, rounded black actions, and source cards with small tags and circular selection controls. Added responsive layouts and explicit selected/focus states.
 - Updated Vite to the supported 6.4 release line, Vitest to 4.1, and Tailwind CSS to 4.3 with its PostCSS plugin to address current dependency advisories. Preserved the existing Tailwind theme configuration.
 - Refreshed compatible transitive dependencies and browser-support data, and updated React Router to the patched 7.18 release line.
 - Updated CI and GitHub Pages builds to Node.js 24 LTS and restricted the local development server to loopback by default.

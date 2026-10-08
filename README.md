@@ -6,7 +6,7 @@
 [![immich-go v0.32.0](https://img.shields.io/badge/immich--go-v0.32.0-blue)](https://github.com/simulot/immich-go)
 [![Immich v3.3.0 API checked](https://img.shields.io/badge/Immich-v3.3.0%20API%20checked-4F46E5)](https://github.com/immich-app/immich/releases/tag/v3.3.0)
 
-![App Preview](screenshots/app-preview.png)
+![App Preview](screenshots/design-revision/after.jpg)
 
 **A friendly, no-command-line-needed way to import your photos into Immich.**
 

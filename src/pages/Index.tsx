@@ -46,7 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Server, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Plus, Server, XCircle } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 
 const stepTransition = { duration: 0.18, ease: "easeOut" } as const;
@@ -65,11 +65,11 @@ const osDisplay: Record<"macos" | "windows" | "linux", string> = {
   linux: "Linux",
 };
 
-const sourceOptions: { id: UploadSource; icon: typeof Folder; title: string; subtitle: string }[] = [
-  { id: "folder", icon: Folder, title: "Photos from my computer", subtitle: "A folder of photos on your drive." },
-  { id: "takeout", icon: ImageIcon, title: "Google Photos Takeout", subtitle: "A downloaded Google Takeout zip or folder." },
-  { id: "icloud", icon: Cloud, title: "Apple iCloud export", subtitle: "Photos exported from iCloud / Apple." },
-  { id: "immich", icon: Server, title: "Another Immich server", subtitle: "Migrate assets from a second Immich server." },
+const sourceOptions: { id: UploadSource; icon: typeof Folder; title: string; subtitle: string; tag: string }[] = [
+  { id: "folder", icon: Folder, title: "Photos from my computer", subtitle: "A folder of photos on your drive.", tag: "local files" },
+  { id: "takeout", icon: ImageIcon, title: "Google Photos Takeout", subtitle: "A downloaded Google Takeout zip or folder.", tag: "takeout" },
+  { id: "icloud", icon: Cloud, title: "Apple iCloud export", subtitle: "Photos exported from iCloud / Apple.", tag: "icloud" },
+  { id: "immich", icon: Server, title: "Another Immich server", subtitle: "Migrate assets from a second Immich server.", tag: "migration" },
 ];
 
 type KeyValidationLevel = "ok" | "warn" | "error";
@@ -132,6 +132,11 @@ const Index = () => {
   const update = useCallback((partial: Partial<FriendlyState>) => {
     setState((prev) => ({ ...prev, ...partial }));
   }, []);
+
+  useEffect(() => {
+    // Long option/command screens must not leave the next step halfway down the page.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [step]);
 
   useEffect(() => {
     const raw = localStorage.getItem(REMEMBER_KEY);
@@ -393,23 +398,10 @@ const Index = () => {
     setPendingLiveAction(null);
   };
 
-  const bgUrl = `${import.meta.env.BASE_URL}luca-micheli-ruWkmt3nU58-unsplash.jpg`;
-
   return (
-    <div
-      className="relative flex min-h-screen flex-col items-center justify-center p-4"
-      style={{
-        backgroundImage: `url(${bgUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-      }}
-    >
+    <div className="import-page">
       <MacWindow onSettingsClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
-        {/* Dashed divider — separates step indicator from step content */}
-        <div className="border-t border-dashed border-border -mx-6 mb-6" />
         {step >= 3 && (
           <div className="mb-4 flex items-center justify-end">
             <DropdownMenu>
@@ -443,41 +435,45 @@ const Index = () => {
         {step === 1 && (
           <m.div key="step-1" {...stepMotionProps} className="space-y-6">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">What would you like to upload?</h2>
+              <h1 className="step-heading">What would you like to upload?</h1>
               <p className="text-sm text-muted-foreground">
                 Pick one option. You can change it anytime.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {sourceOptions.map(({ id, icon: Icon, title, subtitle }) => (
+            <div className="source-grid">
+              {sourceOptions.map(({ id, icon: Icon, title, subtitle, tag }) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => selectSource(id)}
+                  aria-pressed={state.source === id}
                   className={cn(
-                    "rounded-xl border p-4 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985] bg-muted/60",
-                    state.source === id
-                      ? "border-step-active bg-step-active/10"
-                      : "border-transparent hover:bg-muted"
+                    "source-card",
+                    state.source === id && "source-card-selected"
                   )}
                 >
-                  <Icon className="mb-3 h-6 w-6 text-step-active" />
-                  <div className="font-medium">{title}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>
+                  <Icon className="source-icon" aria-hidden="true" />
+                  <span className="source-title">{title}</span>
+                  <span className="source-description">{subtitle}</span>
+                  <span className="source-card-footer" aria-hidden="true">
+                    <span className="source-tag">{tag}</span>
+                    <span className="source-select">
+                      {state.source === id ? <Check /> : <Plus />}
+                    </span>
+                  </span>
                 </button>
               ))}
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="source-hint">
               Not sure? Most people choose <span className="font-medium text-foreground">Photos from my computer</span>.
             </p>
 
-            {/* Dashed divider above footer */}
-            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
-            <div className="flex justify-end">
+            <div className="step-footer justify-end">
               <Button onClick={handleSourceContinue} disabled={!state.source}>
                 Continue
+                <ArrowRight aria-hidden="true" />
               </Button>
             </div>
           </m.div>
@@ -486,9 +482,9 @@ const Index = () => {
         {step === 2 && (
           <m.div key="step-2" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">
+              <h1 className="step-heading">
                 {state.source === "immich" ? "Connect both Immich servers" : "Connect to your Immich server"}
-              </h2>
+              </h1>
               <p className="text-sm text-muted-foreground">
                 Source: {getSourceLabel(state.source)}
               </p>
@@ -496,7 +492,7 @@ const Index = () => {
 
             {state.source === "immich" && (
               <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
-                <h3 className="text-sm font-medium">Source server (migrate from)</h3>
+                <h2 className="text-sm font-medium">Source server (migrate from)</h2>
                 <div className="space-y-2">
                   <Label htmlFor="from-server-url">Source server address</Label>
                   <Input
@@ -616,18 +612,16 @@ const Index = () => {
               </div>
             )}
 
-            {/* Dashed divider above footer */}
-            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
-            <div className="flex justify-between">
+            <div className="step-footer">
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="outline" onClick={runConnectionTest} disabled={connecting}>
                   {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
                   Test connection
                 </Button>
-                <Button onClick={proceed}>Continue</Button>
+                <Button onClick={proceed}>Continue <ArrowRight aria-hidden="true" /></Button>
               </div>
             </div>
           </m.div>
@@ -636,7 +630,7 @@ const Index = () => {
         {step === 3 && (
           <m.div key="step-3" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">Choose your style</h2>
+              <h1 className="step-heading">Choose your style</h1>
               <p className="text-sm text-muted-foreground">
                 We&apos;ll map your choice to the right command automatically.
               </p>
@@ -677,11 +671,10 @@ const Index = () => {
                     key={preset.id}
                     type="button"
                     onClick={() => handlePresetChange(preset.id)}
+                    aria-pressed={selectedPreset === preset.id}
                     className={cn(
-                      "rounded-xl border p-3 text-left transition-[color,background-color,border-color,transform] active:scale-[0.985] bg-muted/60",
-                      selectedPreset === preset.id
-                        ? "border-step-active bg-step-active/10"
-                        : "border-transparent hover:bg-muted"
+                      "preset-card",
+                      selectedPreset === preset.id && "preset-card-selected"
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -720,7 +713,7 @@ const Index = () => {
 
             {selectedPreset === "custom" && (
               <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
-                <h3 className="font-medium">Custom settings</h3>
+                <h2 className="font-medium">Custom settings</h2>
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -861,9 +854,7 @@ const Index = () => {
               </div>
             )}
 
-            {/* Dashed divider above footer */}
-            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
-            <div className="flex justify-between">
+            <div className="step-footer">
               <Button variant="outline" onClick={() => setStep(2)}>
                 Back
               </Button>
@@ -872,6 +863,7 @@ const Index = () => {
                 disabled={(sourceUsesPath(state.source) && !state.inputPath.trim()) || !state.preset}
               >
                 Generate command
+                <ArrowRight aria-hidden="true" />
               </Button>
             </div>
           </m.div>
@@ -880,7 +872,7 @@ const Index = () => {
         {step === 4 && (
           <m.div key="step-4" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">You&apos;re all set</h2>
+              <h1 className="step-heading">You&apos;re all set</h1>
               <p className="text-sm text-muted-foreground">
                 Copy this command and run it in your terminal.
               </p>
@@ -936,7 +928,7 @@ const Index = () => {
               </div>
             )}
 
-            <div className="rounded-lg bg-terminal-bg p-4">
+            <div className="command-panel rounded-2xl bg-terminal-bg p-5">
               <pre className="text-sm font-mono text-terminal-fg overflow-x-auto whitespace-pre leading-relaxed">
                 <span className="text-terminal-green select-none">$ </span>
                 {highlightedCommand}
@@ -1000,9 +992,7 @@ const Index = () => {
               </a>
             </div>
 
-            {/* Dashed divider above footer */}
-            <div className="border-t border-dashed border-border -mx-6 mt-2 mb-4" />
-            <div className="flex justify-between">
+            <div className="step-footer">
               <Button variant="outline" onClick={() => setStep(3)}>
                 Back
               </Button>
@@ -1040,9 +1030,6 @@ const Index = () => {
         tab={settingsTab}
         onTabChange={setSettingsTab}
       />
-      <span className="fixed bottom-2 left-3 text-[10px] text-white/60 drop-shadow-sm">
-        Photo by Luca Micheli on Unsplash
-      </span>
     </div>
   );
 };

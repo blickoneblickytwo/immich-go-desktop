@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Design comparison · immich-go desktop</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #faf9f7; color: #252321; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+      main { max-width: 1440px; margin: 0 auto; padding: 36px; }
+      header { margin-bottom: 30px; }
+      h1 { margin: 0 0 8px; font-size: 30px; font-weight: 500; letter-spacing: -.04em; }
+      header p, figcaption p { margin: 0; color: #706b65; font-size: 14px; line-height: 1.6; }
+      .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      figure { min-width: 0; margin: 0; }
+      .label { display: inline-block; margin-bottom: 12px; padding: 6px 12px; border-radius: 99px; background: #edeae6; font-size: 12px; }
+      .after { background: #ffe6d1; color: #784022; }
+      img { display: block; width: 100%; border: 1px solid #e8e3dd; border-radius: 16px; }
+      a { display: block; border-radius: 16px; }
+      a:focus-visible { outline: 2px solid #252321; outline-offset: 5px; }
+      figcaption { padding: 17px 0 0; }
+      h2 { margin: 0 0 5px; font-size: 17px; font-weight: 500; }
+      footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid #e8e3dd; color: #706b65; font-size: 12px; }
+      @media (max-width: 640px) { main { padding: 22px; } .comparison { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Design revision</h1>
+        <p>The original app and the revised design, captured at the same desktop size. Click either image to view it in full.</p>
+      </header>
+      <div class="comparison">
+        <figure>
+          <span class="label">Before</span>
+          <a href="before.jpg" target="_blank" rel="noopener"><img src="before.jpg" alt="Original app with a landscape background and a macOS-style window" /></a>
+          <figcaption><h2>The original</h2><p>Landscape backdrop, window chrome, orange icons, and dashed dividers.</p></figcaption>
+        </figure>
+        <figure>
+          <span class="label after">After</span>
+          <a href="after.jpg" target="_blank" rel="noopener"><img src="after.jpg" alt="Revised app with a pale canvas, inset orange gradient, and softly rounded selection cards" /></a>
+          <figcaption><h2>Closer to your reference</h2><p>A quiet canvas, inset orange gradient, soft surfaces, small tags, and rounded black controls.</p></figcaption>
+        </figure>
+      </div>
+      <footer>Local design preview · codex/soft-card-design · No publishing or deployment</footer>
+    </main>
+  </body>
+</html>
