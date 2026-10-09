@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Changed
+- Gave the gradient a distinct peach, cream, and lilac composition. Refined Settings with concise sections, clear saved-connection status, accessible copy feedback, expandable help, and a bounded scrolling layout. Updated the design comparison against the actual published app.
+- Simplified the reference-inspired design to one compact card with a source selector, a single progress line, and a circular next action. Moved optional help and command explanations into disclosures. Added spring-based card resizing, fluid step and surface transitions, coordinated hover/press feedback, and reduced-motion support.
 - Refined the wizard around the original soft-gradient reference: pale neutral canvas, inset orange gradient, quieter progress navigation, rounded black actions, and source cards with small tags and circular selection controls. Added responsive layouts and explicit selected/focus states.
 - Updated Vite to the supported 6.4 release line, Vitest to 4.1, and Tailwind CSS to 4.3 with its PostCSS plugin to address current dependency advisories. Preserved the existing Tailwind theme configuration.
 - Refreshed compatible transitive dependencies and browser-support data, and updated React Router to the patched 7.18 release line.

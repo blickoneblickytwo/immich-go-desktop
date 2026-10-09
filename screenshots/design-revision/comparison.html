@@ -12,11 +12,13 @@
       h1 { margin: 0 0 8px; font-size: 30px; font-weight: 500; letter-spacing: -.04em; }
       header p, figcaption p { margin: 0; color: #706b65; font-size: 14px; line-height: 1.6; }
       .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .section-title { margin: 36px 0 18px; font-size: 22px; }
       figure { min-width: 0; margin: 0; }
       .label { display: inline-block; margin-bottom: 12px; padding: 6px 12px; border-radius: 99px; background: #edeae6; font-size: 12px; }
       .after { background: #ffe6d1; color: #784022; }
       img { display: block; width: 100%; border: 1px solid #e8e3dd; border-radius: 16px; }
-      a { display: block; border-radius: 16px; }
+      a { color: inherit; text-underline-offset: 3px; }
+      figure > a { display: block; border-radius: 16px; }
       a:focus-visible { outline: 2px solid #252321; outline-offset: 5px; }
       figcaption { padding: 17px 0 0; }
       h2 { margin: 0 0 5px; font-size: 17px; font-weight: 500; }
@@ -27,19 +29,32 @@
   <body>
     <main>
       <header>
-        <h1>Design revision</h1>
-        <p>The original app and the revised design, captured at the same desktop size. Click either image to view it in full.</p>
+        <h1>Published app → Latest design</h1>
+        <p>The <a href="https://blickoneblickytwo.github.io/immich-go-desktop/" target="_blank" rel="noopener">published app</a> and the <a href="/">newest local revision</a>, captured at 1280 × 900 on October 9, 2026. Click an image to view it in full.</p>
       </header>
       <div class="comparison">
         <figure>
-          <span class="label">Before</span>
-          <a href="before.jpg" target="_blank" rel="noopener"><img src="before.jpg" alt="Original app with a landscape background and a macOS-style window" /></a>
-          <figcaption><h2>The original</h2><p>Landscape backdrop, window chrome, orange icons, and dashed dividers.</p></figcaption>
+          <span class="label">Live</span>
+          <a href="before.jpg" target="_blank" rel="noopener"><img src="before.jpg" alt="Published app with a landscape background, four source tiles, a logo header, and a numbered stepper" /></a>
+          <figcaption><h2>The published app</h2><p>Landscape artwork, window chrome, a full stepper, and four source tiles.</p></figcaption>
         </figure>
         <figure>
-          <span class="label after">After</span>
-          <a href="after.jpg" target="_blank" rel="noopener"><img src="after.jpg" alt="Revised app with a pale canvas, inset orange gradient, and softly rounded selection cards" /></a>
-          <figcaption><h2>Closer to your reference</h2><p>A quiet canvas, inset orange gradient, soft surfaces, small tags, and rounded black controls.</p></figcaption>
+          <span class="label after">Latest local</span>
+          <a href="after.jpg" target="_blank" rel="noopener"><img src="after.jpg" alt="Newest minimal app with a peach, cream, and lilac gradient, one source selector, and a circular action" /></a>
+          <figcaption><h2>A quieter visual direction</h2><p>A compact card with its own soft gradient, one selector, one action, fluid transitions, and reduced-motion support.</p></figcaption>
+        </figure>
+      </div>
+      <h2 class="section-title">Settings</h2>
+      <div class="comparison">
+        <figure>
+          <span class="label">Live</span>
+          <a href="settings-live.jpg" target="_blank" rel="noopener"><img src="settings-live.jpg" alt="Privacy tab in the published Settings dialog" /></a>
+          <figcaption><h2>The published Settings</h2><p>The original privacy information and controls.</p></figcaption>
+        </figure>
+        <figure>
+          <span class="label after">Latest local</span>
+          <a href="settings-after.jpg" target="_blank" rel="noopener"><img src="settings-after.jpg" alt="Revised Settings with segmented tabs, clear privacy sections, and saved-connection status" /></a>
+          <figcaption><h2>Clearer and easier to scan</h2><p>Concise sections, saved-connection status, expandable help, accessible copy feedback, and scrolling within the dialog.</p></figcaption>
         </figure>
       </div>
       <footer>Local design preview · codex/soft-card-design · No publishing or deployment</footer>

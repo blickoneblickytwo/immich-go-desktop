@@ -46,16 +46,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, ArrowRight, Check, CheckCircle2, ChevronDown, Cloud, Folder, Image as ImageIcon, Loader2, Monitor, Plus, Server, XCircle } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
-
-const stepTransition = { duration: 0.18, ease: "easeOut" } as const;
-const stepMotionProps = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
-  transition: stepTransition,
-};
+import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Loader2, XCircle } from "lucide-react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 
 const stepLabels = ["What to upload", "Connect", "Choose style", "Done"];
 
@@ -65,11 +57,11 @@ const osDisplay: Record<"macos" | "windows" | "linux", string> = {
   linux: "Linux",
 };
 
-const sourceOptions: { id: UploadSource; icon: typeof Folder; title: string; subtitle: string; tag: string }[] = [
-  { id: "folder", icon: Folder, title: "Photos from my computer", subtitle: "A folder of photos on your drive.", tag: "local files" },
-  { id: "takeout", icon: ImageIcon, title: "Google Photos Takeout", subtitle: "A downloaded Google Takeout zip or folder.", tag: "takeout" },
-  { id: "icloud", icon: Cloud, title: "Apple iCloud export", subtitle: "Photos exported from iCloud / Apple.", tag: "icloud" },
-  { id: "immich", icon: Server, title: "Another Immich server", subtitle: "Migrate assets from a second Immich server.", tag: "migration" },
+const sourceOptions: { id: UploadSource; title: string; subtitle: string; tag: string }[] = [
+  { id: "folder", title: "Photos from my computer", subtitle: "Import a folder of photos from your computer into Immich.", tag: "photo folder" },
+  { id: "takeout", title: "Google Photos Takeout", subtitle: "Bring your Google Photos library into Immich from a Takeout export.", tag: "google takeout" },
+  { id: "icloud", title: "Apple iCloud export", subtitle: "Bring your photos into Immich from an Apple iCloud export.", tag: "icloud export" },
+  { id: "immich", title: "Another Immich server", subtitle: "Move your library from another Immich server into this one.", tag: "immich server" },
 ];
 
 type KeyValidationLevel = "ok" | "warn" | "error";
@@ -106,6 +98,12 @@ function isPrivateHost(serverUrl: string): boolean {
 }
 
 const Index = () => {
+  const reducedMotion = useReducedMotion();
+  const stepMotionProps = {
+    initial: { opacity: 0, y: reducedMotion ? 0 : 6 },
+    animate: { opacity: 1, y: 0, transition: { duration: reducedMotion ? 0.12 : 0.32, ease: [0.16, 1, 0.3, 1] as const } },
+    exit: { opacity: 0, y: reducedMotion ? 0 : -4, transition: { duration: reducedMotion ? 0.08 : 0.16, ease: "easeIn" as const } },
+  };
   const [step, setStep] = useState(1);
   const [state, setState] = useState<FriendlyState>({ ...defaultFriendlyState });
   const [platformOverride, setPlatformOverride] = useState<"auto" | "linux" | "macos" | "windows">("auto");
@@ -169,6 +167,7 @@ const Index = () => {
   }, []);
 
   const presets = useMemo(() => getPresets(state.source), [state.source]);
+  const selectedSource = sourceOptions.find((source) => source.id === state.source);
   const command = useMemo(() => buildFriendlyCommand(state, os, selectedShell), [state, os, selectedShell]);
   const checklist = useMemo(() => getCommandChecklist(state, os), [state, os]);
   const isDryRun = command.includes(FLAG_REGISTRY.dryRun.name);
@@ -403,7 +402,7 @@ const Index = () => {
       <MacWindow onSettingsClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
         {step >= 3 && (
-          <div className="mb-4 flex items-center justify-end">
+          <div className="platform-control">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -411,7 +410,6 @@ const Index = () => {
                   size="sm"
                   className="h-7 gap-1.5 px-2 text-xs font-normal text-muted-foreground hover:text-foreground"
                 >
-                  <Monitor className="h-3.5 w-3.5" />
                   {osDisplay[os]}
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />
                 </Button>
@@ -433,46 +431,39 @@ const Index = () => {
 
         <AnimatePresence mode="wait" initial={false}>
         {step === 1 && (
-          <m.div key="step-1" {...stepMotionProps} className="space-y-6">
-            <div className="space-y-1">
-              <h1 className="step-heading">What would you like to upload?</h1>
-              <p className="text-sm text-muted-foreground">
-                Pick one option. You can change it anytime.
-              </p>
-            </div>
-
-            <div className="source-grid">
-              {sourceOptions.map(({ id, icon: Icon, title, subtitle, tag }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => selectSource(id)}
-                  aria-pressed={state.source === id}
-                  className={cn(
-                    "source-card",
-                    state.source === id && "source-card-selected"
-                  )}
+          <m.div key="step-1" {...stepMotionProps} className="source-step">
+            <div>
+              <h1 className="step-heading">Bring your photos to Immich.</h1>
+              <AnimatePresence mode="wait" initial={false}>
+                <m.p
+                  key={state.source ?? "intro"}
+                  className="source-description"
+                  initial={{ opacity: 0, y: reducedMotion ? 0 : 3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reducedMotion ? 0.1 : 0.22, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <Icon className="source-icon" aria-hidden="true" />
-                  <span className="source-title">{title}</span>
-                  <span className="source-description">{subtitle}</span>
-                  <span className="source-card-footer" aria-hidden="true">
-                    <span className="source-tag">{tag}</span>
-                    <span className="source-select">
-                      {state.source === id ? <Check /> : <Plus />}
-                    </span>
-                  </span>
-                </button>
-              ))}
+                  {selectedSource?.subtitle ?? "Choose where your photos are coming from. We’ll prepare a command for your import."}
+                </m.p>
+              </AnimatePresence>
             </div>
-
-            <p className="source-hint">
-              Not sure? Most people choose <span className="font-medium text-foreground">Photos from my computer</span>.
-            </p>
-
-            <div className="step-footer justify-end">
-              <Button onClick={handleSourceContinue} disabled={!state.source}>
-                Continue
+            <div className="source-actions">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="source-picker" type="button" aria-label={selectedSource ? `Upload source: ${selectedSource.title}` : "Upload source"}>
+                    {selectedSource?.tag ?? "choose source"}
+                    <ChevronDown aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={10} className="source-menu">
+                  <DropdownMenuRadioGroup value={state.source ?? ""} onValueChange={(value) => selectSource(value as UploadSource)}>
+                    {sourceOptions.map(({ id, title }) => (
+                      <DropdownMenuRadioItem key={id} value={id}>{title}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button className="round-action" size="icon" onClick={handleSourceContinue} disabled={!state.source} aria-label="Continue" title="Continue">
                 <ArrowRight aria-hidden="true" />
               </Button>
             </div>
@@ -483,7 +474,7 @@ const Index = () => {
           <m.div key="step-2" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
               <h1 className="step-heading">
-                {state.source === "immich" ? "Connect both Immich servers" : "Connect to your Immich server"}
+                {state.source === "immich" ? "Connect both servers." : "Connect to Immich."}
               </h1>
               <p className="text-sm text-muted-foreground">
                 Source: {getSourceLabel(state.source)}
@@ -543,7 +534,6 @@ const Index = () => {
                 autoCorrect="off"
                 spellCheck={false}
               />
-              <p className="text-xs text-muted-foreground">This is the URL you use to open Immich.</p>
               {serverError && <p className="text-xs text-destructive">{serverError}</p>}
             </div>
 
@@ -561,11 +551,11 @@ const Index = () => {
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                Leave this blank and the command will contain{" "}
-                <code className="font-mono">{API_KEY_PLACEHOLDER}</code> for you to swap in
-                yourself — your key never has to touch this page at all.
+                Leave blank to add your key to the command yourself.
               </p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
+              <details className="quiet-details">
+                <summary>API key help</summary>
+                <div className="details-content flex flex-wrap gap-x-3 gap-y-2">
                 <a
                   href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key"
                   target="_blank"
@@ -581,10 +571,11 @@ const Index = () => {
                 >
                   What permissions does my key need?
                 </button>
-              </div>
+                </div>
+              </details>
               {apiKeyError && <p className="text-xs text-destructive">{apiKeyError}</p>}
               {!apiKeyError && apiKeyWarning && (
-                <p className="text-xs text-mac-yellow">{apiKeyWarning}</p>
+                <p className="text-xs text-step-active">{apiKeyWarning}</p>
               )}
             </div>
 
@@ -613,15 +604,15 @@ const Index = () => {
             )}
 
             <div className="step-footer">
-              <Button variant="outline" onClick={() => setStep(1)}>
+              <Button variant="ghost" onClick={() => setStep(1)}>
                 Back
               </Button>
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" onClick={runConnectionTest} disabled={connecting}>
+                <Button variant="ghost" onClick={runConnectionTest} disabled={connecting}>
                   {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
                   Test connection
                 </Button>
-                <Button onClick={proceed}>Continue <ArrowRight aria-hidden="true" /></Button>
+                <Button className="round-action" size="icon" onClick={proceed} aria-label="Continue" title="Continue"><ArrowRight aria-hidden="true" /></Button>
               </div>
             </div>
           </m.div>
@@ -630,9 +621,9 @@ const Index = () => {
         {step === 3 && (
           <m.div key="step-3" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h1 className="step-heading">Choose your style</h1>
+              <h1 className="step-heading">Choose your import.</h1>
               <p className="text-sm text-muted-foreground">
-                We&apos;ll map your choice to the right command automatically.
+                Start with a test run, or upload when you’re ready.
               </p>
             </div>
 
@@ -653,7 +644,7 @@ const Index = () => {
                   Tip: drag the folder/file into Terminal to get the full path, then paste it here.
                 </p>
                 {state.source === "takeout" && (
-                  <p className="text-xs text-mac-yellow">
+                  <p className="text-xs text-muted-foreground">
                     Google Takeout exports multiple zip files. Use a wildcard pattern
                     like <code className="font-mono">takeout-*.zip</code> to include
                     them all, or point to the folder containing the extracted files.
@@ -663,8 +654,6 @@ const Index = () => {
             )}
 
             <div className="space-y-2">
-              {/* Section label — muted xs style like Linear */}
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">How should we handle this?</p>
               <div className="grid gap-2">
                 {presets.map((preset) => (
                   <button
@@ -677,34 +666,29 @@ const Index = () => {
                       selectedPreset === preset.id && "preset-card-selected"
                     )}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="font-medium">{preset.title}</div>
-                        <div className="text-sm text-muted-foreground">{preset.subtitle}</div>
-                        {preset.hint && (
+                        <div className="text-sm font-medium">{preset.title}</div>
+                        <div className="text-xs text-muted-foreground">{preset.subtitle}</div>
+                        {selectedPreset === preset.id && preset.hint && (
                           <div className="mt-1 text-xs text-muted-foreground">{preset.hint}</div>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {preset.recommended && (
-                          <span className="rounded-full bg-step-done/15 px-2 py-1 text-xs font-medium text-step-done">
-                            recommended
-                          </span>
-                        )}
+                      {selectedPreset === preset.id && <div className="shrink-0">
                         {preset.id === "test-run" || (preset.id === "custom" && state.customDryRun) ? (
-                          <span className="rounded-full bg-step-done/15 px-2 py-1 text-xs font-medium text-step-done">
+                          <span className="mode-tag text-step-done">
                             dry run
                           </span>
                         ) : preset.id !== "custom" ? (
-                          <span className="rounded-full bg-step-active/15 px-2 py-1 text-xs font-medium text-step-active">
+                          <span className="mode-tag text-step-active">
                             live upload
                           </span>
                         ) : (
-                          <span className="rounded-full bg-step-active/15 px-2 py-1 text-xs font-medium text-step-active">
+                          <span className="mode-tag text-step-active">
                             live upload
                           </span>
                         )}
-                      </div>
+                      </div>}
                     </div>
                   </button>
                 ))}
@@ -855,7 +839,7 @@ const Index = () => {
             )}
 
             <div className="step-footer">
-              <Button variant="outline" onClick={() => setStep(2)}>
+              <Button variant="ghost" onClick={() => setStep(2)}>
                 Back
               </Button>
               <Button
@@ -872,29 +856,26 @@ const Index = () => {
         {step === 4 && (
           <m.div key="step-4" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h1 className="step-heading">You&apos;re all set</h1>
+              <h1 className="step-heading">Your command is ready.</h1>
               <p className="text-sm text-muted-foreground">
                 Copy this command and run it in your terminal.
               </p>
             </div>
 
             <div className={cn(
-              "rounded-md border px-3 py-2 text-base font-semibold",
+              "import-status text-sm",
               isDryRun
-                ? "border-step-done/30 bg-step-done/10 text-step-done"
-                : "border-destructive/30 bg-destructive/10 text-destructive"
+                ? "text-step-done"
+                : "text-destructive"
             )}>
               {isDryRun
-                ? "🛡️ This is a test run — nothing will upload."
-                : "⚠️ Live mode — files will be uploaded to your server."}
+                ? "Test run. Nothing will upload."
+                : "Live upload. This command will upload your files."}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs">
-                Platform: {os}
-              </span>
-              <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs">
-                Shell: {shellLabel}
+              <span className="text-xs text-muted-foreground">
+                {shellLabel}
               </span>
               {os === "windows" && (
                 <div className="ml-auto flex gap-2">
@@ -947,23 +928,23 @@ const Index = () => {
               <Button variant="link" onClick={handleDownloadScript}>
                 Download as script
               </Button>
-              <Button variant="ghost" onClick={() => setShowKey((v) => !v)}>
+              {Boolean(state.apiKey.trim() || (state.source === "immich" && state.fromApiKey.trim())) && <Button variant="ghost" onClick={() => setShowKey((v) => !v)}>
                 {showKey ? "Hide key" : "Reveal key"}
-              </Button>
+              </Button>}
             </div>
 
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">What does this command do?</p>
-              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+            <details className="quiet-details">
+              <summary>What does this command do?</summary>
+              <ul className="details-content space-y-1 text-sm text-muted-foreground">
                 {checklist.map((line) => (
                   <li key={line}>• {line}</li>
                 ))}
               </ul>
-            </div>
+            </details>
 
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">After you run it</p>
-              <p className="mt-2 text-sm text-muted-foreground">
+            <details className="quiet-details">
+              <summary>After you run it</summary>
+              <p className="details-content text-sm text-muted-foreground">
                 immich-go prints its progress as it goes. When it's done, check your Immich library
                 — if your photos are there, you're all set. A line like{" "}
                 <code className="font-mono text-xs">WARNING: N assets did not reach a final state</code>{" "}
@@ -978,7 +959,7 @@ const Index = () => {
                 </button>{" "}
                 for more.
               </p>
-            </div>
+            </details>
 
             <div className="text-sm text-muted-foreground">
               Don&apos;t have immich-go installed?{" "}
@@ -993,10 +974,10 @@ const Index = () => {
             </div>
 
             <div className="step-footer">
-              <Button variant="outline" onClick={() => setStep(3)}>
+              <Button variant="ghost" onClick={() => setStep(3)}>
                 Back
               </Button>
-              <Button variant="outline" onClick={reset}>
+              <Button variant="ghost" onClick={reset}>
                 Start over
               </Button>
             </div>

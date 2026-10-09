@@ -47,7 +47,7 @@ It supports the main immich-go import sources:
 
 You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app targets **immich-go v0.32.0**. On October 8, 2026, its generated flags were checked against the upstream command documentation and its optional connection-test endpoint was checked against the **Immich v3.3.0** OpenAPI specification. No integration changes were indicated by those checks; a live photo import against v3.3.0 has not been tested. See [the verification baseline](IMMICH_GO_BASELINE.md) for the evidence and remaining binary-verification work.
 
-The gear icon in the title bar opens **Settings**, with Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
+The **Settings** link below the card opens Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
 
 ---
 
