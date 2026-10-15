@@ -1,0 +1,37 @@
+name: Commercial license request
+description: Contact the maintainer about permission for commercial use.
+title: "Commercial license request: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to contact blickoneblickytwo about a separate commercial license.
+        This issue is public; do not include confidential information.
+        Opening an issue does not grant permission. Commercial use outside the
+        PolyForm Noncommercial license's permitted purposes requires a separate
+        written license before use.
+  - type: input
+    id: organization
+    attributes:
+      label: Organization or project
+      description: The business or project requesting permission.
+    validations:
+      required: true
+  - type: textarea
+    id: intended-use
+    attributes:
+      label: Intended commercial use
+      description: Describe how you plan to use the app and who will use it.
+    validations:
+      required: true
+  - type: dropdown
+    id: delivery
+    attributes:
+      label: How will you use the app?
+      options:
+        - Internal business use
+        - Distributed commercial application
+        - Hosted or paid service
+        - Another commercial use (describe above)
+    validations:
+      required: true

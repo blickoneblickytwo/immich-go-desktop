@@ -1,6 +1,6 @@
 # immich-go-desktop
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-yellow.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 [![GitHub Stars](https://img.shields.io/github/stars/blickoneblickytwo/immich-go-desktop?style=flat)](https://github.com/blickoneblickytwo/immich-go-desktop/stargazers)
 [![immich-go v0.32.0](https://img.shields.io/badge/immich--go-v0.32.0-blue)](https://github.com/simulot/immich-go)
@@ -61,7 +61,7 @@ A few more specifics:
 
 - **No backend.** This is a static page. There's no server behind it, no analytics, no logging - nobody sees what you type, including me.
 - **Local storage only if you ask for it.** Ticking "Remember on this device" saves your server URL (and key, if you entered one) in your browser's local storage, on your machine. Nothing is uploaded.
-- **Don't take my word for it.** The code is open source (MIT) - read exactly what it does, or open your browser's dev tools, go to the Network tab, and watch while you use it. You'll see nothing go out except that one optional test.
+- **Don't take my word for it.** The source code is available to inspect - read exactly what it does, or open your browser's dev tools, go to the Network tab, and watch while you use it. You'll see nothing go out except that one optional test.
 - **Want zero trust required?** [Run it locally](#run-it-locally-optional) - same code, on your own machine.
 
 The in-app **Settings → Privacy** tab has the same information for quick reference.
@@ -105,17 +105,21 @@ Curious about the latest improvements (like the fully optional API key, the new 
 
 ## Want to help?
 
-This is an open source project and contributions are very welcome! A few areas where help would be especially appreciated:
+This is a source-available project and contributions are welcome! A few areas where help would be especially appreciated:
 
 - **Standalone desktop app** - wrapping this into a proper Mac/Windows/Linux app (Electron, Tauri, or similar) so users don't need to touch the terminal at all. If this sounds like something you could help with, please open an issue or reach out.
 - **UI improvements and accessibility**
 - **Support for more immich-go flags**
 - **Testing across different setups**
 
-Even if you just find a bug or have a feature idea, opening an issue is a huge help.
+Even if you just find a bug or have a feature idea, opening an issue is a huge help. Before contributing code, open an issue to agree on contribution licensing, including any permission needed for separate commercial licensing.
 
 ---
 
 ## License
 
-MIT - use it however you want.
+This revision uses the [PolyForm Noncommercial License 1.0.0](LICENSE). Personal and other permitted noncommercial uses are free under those terms. The license also expressly permits uses by the noncommercial organizations it lists.
+
+**Commercial use outside those permitted purposes requires a separate written commercial license before use.** This includes commercial applications, paid hosting or migration services, and internal business use that is outside the license's permitted purposes. [Contact blickoneblickytwo on GitHub](https://github.com/blickoneblickytwo/immich-go-desktop/issues/new?template=commercial-license.yml) to discuss permission. Opening an issue does not itself grant permission.
+
+This is **source-available**, rather than OSI-approved open source. See [commercial licensing and license history](COMMERCIAL-LICENSE.md) for details. Existing MIT grants remain valid; the [previous MIT notice](LICENSES/MIT-legacy.txt) is retained for previously MIT-licensed material. Third-party components, including immich-go, retain their own licenses.

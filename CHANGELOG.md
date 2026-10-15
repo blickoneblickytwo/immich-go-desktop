@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Changed
+- Adopted PolyForm Noncommercial 1.0.0 for this revision, with a separate written license required for commercial use outside its permitted purposes. Added GitHub commercial-license requests and updated the README, package metadata, and Settings. Preserved the previous MIT notice and existing MIT rights; third-party licenses are unchanged.
 - Gave the gradient a distinct peach, cream, and lilac composition. Refined Settings with concise sections, clear saved-connection status, accessible copy feedback, expandable help, and a bounded scrolling layout. Updated the design comparison against the actual published app.
 - Simplified the reference-inspired design to one compact card with a source selector, a single progress line, and a circular next action. Moved optional help and command explanations into disclosures. Added spring-based card resizing, fluid step and surface transitions, coordinated hover/press feedback, and reduced-motion support.
 - Refined the wizard around the original soft-gradient reference: pale neutral canvas, inset orange gradient, quieter progress navigation, rounded black actions, and source cards with small tags and circular selection controls. Added responsive layouts and explicit selected/focus states.

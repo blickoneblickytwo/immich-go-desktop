@@ -160,9 +160,11 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
             <dl className="settings-facts">
               <div><dt>App version</dt><dd>{APP_VERSION}</dd></div>
               <div><dt>immich-go baseline</dt><dd>{IMMICH_GO_BASELINE}</dd></div>
-              <div><dt>License</dt><dd><a href={REPOSITORY + "/blob/main/LICENSE"} target="_blank" rel="noreferrer">MIT</a></dd></div>
+              <div><dt>License</dt><dd><a href={REPOSITORY + "/blob/main/LICENSE"} target="_blank" rel="noreferrer">PolyForm Noncommercial</a></dd></div>
             </dl>
             <div className="settings-resources">
+              <p className="settings-note">Free for permitted noncommercial use. For commercial use outside those terms, request a separate license on GitHub.</p>
+              <ResourceLink href={REPOSITORY + "/issues/new?template=commercial-license.yml"}>Request a commercial license</ResourceLink>
               <ResourceLink href={REPOSITORY}>View source on GitHub</ResourceLink>
               <ResourceLink href={REPOSITORY + "/issues"}>Report an issue or suggest a feature</ResourceLink>
               <ResourceLink href="https://github.com/simulot/immich-go">About immich-go</ResourceLink>
