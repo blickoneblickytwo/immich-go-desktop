@@ -28,7 +28,7 @@ by the applicable rights holder. Pricing and terms are agreed individually.
 ## Existing MIT rights and third-party software
 
 This change applies prospectively and does not revoke existing MIT grants.
-The project history through commit `98513cee` used MIT. Anyone who legitimately
+The project history through commit `1b3635f8` used MIT. Anyone who legitimately
 received an MIT-licensed copy may continue to use that copy under MIT, including
 commercially. Previously MIT-licensed material retains its existing permissions;
 the notice is preserved in [LICENSES/MIT-legacy.txt](LICENSES/MIT-legacy.txt).
