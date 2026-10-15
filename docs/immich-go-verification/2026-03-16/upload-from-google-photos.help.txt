@@ -1,3 +1,5 @@
+[Sanitized help capture: the original device hostname is replaced with <local-hostname>.]
+
 Upload photos either from a zipped Google Photos takeout or decompressed archive
 
 Usage:
@@ -28,7 +30,7 @@ Global Flags:
       --client-timeout duration        Set server calls timeout (default 20m0s)
       --concurrent-tasks int           Number of concurrent tasks (1-20) (default 8)
       --config string                  config file (default is ./immich-go.yaml)
-      --device-uuid string             Set a device UUID (default "local-hostname")
+      --device-uuid string             Set a device UUID (default "<local-hostname>")
       --dry-run                        Simulate all actions
   -l, --log-file string                Write log messages into the file
       --log-level string               Log level (DEBUG|INFO|WARN|ERROR), default INFO (default "INFO")

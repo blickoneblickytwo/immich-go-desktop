@@ -9,6 +9,11 @@ dist-ssr
 
 # Local-only files
 *.local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
 
 # Non-npm lockfiles (this project uses package-lock.json)
 bun.lock
@@ -16,7 +21,7 @@ bun.lockb
 yarn.lock
 pnpm-lock.yaml
 
-# AI tool configs
+# Local tool settings
 .claude/
 .lovable/
 

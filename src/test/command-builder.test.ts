@@ -14,7 +14,8 @@ const baseState: FriendlyState = {
   ...defaultFriendlyState,
   source: "folder",
   serverUrl: "https://photos.example.com",
-  apiKey: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+  // Deliberately fake: this key is used only to verify generated command text.
+  apiKey: "test-api-key-for-command-output-only",
   inputPath: "/Users/me/Pictures",
   preset: "test-run",
 };

@@ -376,8 +376,8 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
   deviceUuid: {
     name: "--device-uuid",
     type: "string",
-    default: "local-hostname",
-    description: "Override device UUID",
+    default: null,
+    description: "Override device UUID (defaults to the hostname of the computer running immich-go)",
     appliesTo: "both",
   },
   dryRun: {
