@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MacWindow from "@/components/MacWindow";
 import SettingsDialog from "@/components/SettingsDialog";
 import StepIndicator from "@/components/StepIndicator";
+import AdvancedSettings from "@/components/AdvancedSettings";
+import { advancedForSource } from "@/lib/advanced-options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +53,9 @@ import { parseServerUrl, testDestinationConnection } from "@/lib/connection";
 import { clearSavedConnection, readSavedConnection, saveConnection } from "@/lib/connection-storage";
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Loader2, XCircle } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { Link, useSearchParams } from "react-router-dom";
+
+const LogReview = lazy(() => import("@/pages/LogReview"));
 
 const stepLabels = ["What to upload", "Connect", "Choose style", "Done"];
 
@@ -101,6 +106,19 @@ function isPrivateHost(serverUrl: string): boolean {
 }
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  // Query-based view works on static hosting without a server-side route fallback.
+  const reviewingLog = searchParams.get("view") === "import-report";
+  const wizard = useRef<HTMLDivElement>(null);
+  const wasReviewingLog = useRef(reviewingLog);
+  useEffect(() => {
+    if (wasReviewingLog.current && !reviewingLog) {
+      const heading = wizard.current?.querySelector("h1");
+      heading?.setAttribute("tabindex", "-1");
+      heading?.focus();
+    }
+    wasReviewingLog.current = reviewingLog;
+  }, [reviewingLog]);
   const reducedMotion = useReducedMotion();
   const stepMotionProps = {
     initial: { opacity: 0, y: reducedMotion ? 0 : 6 },
@@ -139,7 +157,7 @@ const Index = () => {
   useEffect(() => {
     // Long option/command screens must not leave the next step halfway down the page.
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [step]);
+  }, [step, reviewingLog]);
 
   useEffect(() => {
     const saved = readSavedConnection();
@@ -193,11 +211,11 @@ const Index = () => {
       : os === "macos"
         ? "macOS"
         : "Linux";
-  const speedHint = state.customSpeed === "slow"
-    ? "Gentle on your server"
-    : state.customSpeed === "fast"
-      ? "Fastest throughput"
-      : "Balanced resource use";
+  const speedHint = state.advanced.concurrency.trim()
+    ? "Concurrent tasks in Advanced overrides this setting."
+    : state.customSpeed === "slow" ? "2 concurrent tasks. Gentler on your server."
+    : state.customSpeed === "fast" ? "8 concurrent tasks. Uses more resources."
+    : "Let immich-go choose concurrency for this computer.";
 
   const highlightedCommand = useMemo(() => {
     const masked = showKey ? command : maskedCommand;
@@ -369,7 +387,7 @@ const Index = () => {
   };
 
   const selectSource = (source: UploadSource) => {
-    update({ source, preset: "test-run", inputPath: "" });
+    update({ source, preset: "test-run", inputPath: "", advanced: advancedForSource(state.advanced, source) });
   };
 
   const selectedPreset = state.preset ?? "test-run";
@@ -398,6 +416,7 @@ const Index = () => {
   };
 
   return (
+    <><div ref={wizard} hidden={reviewingLog}>
     <div className="import-page">
       <MacWindow onSettingsClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
@@ -708,7 +727,7 @@ const Index = () => {
                 <h2 className="font-medium">Custom settings</h2>
 
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <Label>Start with a test run?</Label>
                     <Switch
                       checked={state.customDryRun}
@@ -745,7 +764,7 @@ const Index = () => {
                 </div>
 
                 {getCreateAlbumsLabel(state.source) && (
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <Label>{getCreateAlbumsLabel(state.source)}</Label>
                     <Switch
                       checked={state.customCreateAlbums}
@@ -756,7 +775,7 @@ const Index = () => {
 
                 {state.source !== "immich" && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <Label>Do you shoot RAW + JPEG?</Label>
                     <Switch
                       checked={state.customShootsRawJpeg}
@@ -787,7 +806,7 @@ const Index = () => {
                 )}
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <Label>Only upload photos from a specific date range?</Label>
                     <Switch
                       checked={state.customUseDateRange}
@@ -823,6 +842,8 @@ const Index = () => {
                   </p>
                 </div>
 
+                <AdvancedSettings source={state.source} value={state.advanced} onChange={advanced => update({ advanced })} />
+                {commandError && <p role="alert" className="text-xs text-destructive">{commandError}</p>}
                 <button
                   type="button"
                   className="text-xs text-muted-foreground underline underline-offset-2"
@@ -831,7 +852,7 @@ const Index = () => {
                   {state.showRawFlags ? "Hide raw command flags" : "Show raw command flags"}
                 </button>
 
-                {state.showRawFlags && (
+                {state.showRawFlags && !commandError && (
                   <div className="rounded-lg border border-border bg-background p-3">
                     <p className="mb-2 text-xs text-muted-foreground">
                       These are the real CLI flags generated from your answers.
@@ -852,7 +873,7 @@ const Index = () => {
               </Button>
               <Button
                 onClick={() => setStep(4)}
-                disabled={(sourceUsesPath(state.source) && !state.inputPath.trim()) || !state.preset}
+                disabled={(sourceUsesPath(state.source) && !state.inputPath.trim()) || !state.preset || Boolean(commandError)}
               >
                 Generate command
                 <ArrowRight aria-hidden="true" />
@@ -971,6 +992,7 @@ const Index = () => {
                 </button>{" "}
                 for more.
               </p>
+              <Link to="/?view=import-report" className="review-log-link">Review an import log</Link>
             </details>
 
             <div className="text-sm text-muted-foreground">
@@ -1025,6 +1047,7 @@ const Index = () => {
         onForgetSavedConnection={() => update({ rememberOnDevice: false })}
       />
     </div>
+    </div>{reviewingLog && <Suspense fallback={<p className="review-loading" role="status">Opening log review…</p>}><LogReview /></Suspense>}</>
   );
 };
 

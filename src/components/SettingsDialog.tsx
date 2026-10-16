@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_KEY_PLACEHOLDER } from "@/lib/friendly-flow";
 import { clearSavedConnection, readSavedConnection } from "@/lib/connection-storage";
+import { Link } from "react-router-dom";
 
 const APP_VERSION = "0.3.0";
 const IMMICH_GO_BASELINE = "v0.32.0";
@@ -117,7 +118,8 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange, o
             <section className="settings-section">
               <h3>This page and its host</h3>
               <p>This version has no analytics or app backend receiving form details. The host serves the page and its assets and may log request metadata. External help links open third-party sites.</p>
-              <p>The page does not read or upload your photos. Run the generated command separately through immich-go to import them.</p>
+              <p>The app does not scan your photo library or upload photos. Run the generated command separately through immich-go to import them.</p>
+              <p>Log review reads only the log file you choose, in browser memory. The app does not upload or save log contents. Logs may contain credentials and private paths.</p>
               <ResourceLink href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub hosting privacy</ResourceLink>
               <ResourceLink href={REPOSITORY + "#run-it-locally-optional"}>Run the app locally</ResourceLink>
             </section>
@@ -144,6 +146,7 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange, o
             <details className="quiet-details settings-detail">
               <summary>Reading import results</summary>
               <p className="details-content settings-note">Check immich-go’s summary and your Immich library. If it reports assets that did not reach a final state, check for missing photos and review its log before treating the import as complete.</p>
+              <Link to="/?view=import-report" onClick={() => onOpenChange(false)} className="review-log-link">Review an import log</Link>
             </details>
             <ResourceLink href="https://github.com/simulot/immich-go">Install immich-go</ResourceLink>
           </TabsContent>

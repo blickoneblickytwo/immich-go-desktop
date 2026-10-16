@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Advanced & log review · Go Desktop</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f7f7f7; color: #252321; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+      main { max-width: 1440px; padding: 32px; margin: auto; }
+      h1 { margin: 0 0 8px; font-size: 30px; font-weight: 500; letter-spacing: -.04em; }
+      header { margin-bottom: 30px; }
+      p { color: #706b65; line-height: 1.7; margin: 0; font-size: 14px; }
+      .screens { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 24px; }
+      figure { margin: 0; min-width: 0; }
+      h2 { margin: 0 0 8px; font-size: 17px; font-weight: 500; }
+      figcaption { margin-bottom: 14px; }
+      img { display: block; width: 100%; border: 1px solid #e9e6e2; border-radius: 16px; }
+      a { color: inherit; text-underline-offset: 3px; }
+      a:focus-visible { outline: 2px solid #252321; outline-offset: 5px; }
+      nav, footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid #e9e6e2; }
+      nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+      @media (max-width: 700px) { main { padding: 24px 16px; } .screens { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>More control. Clearer results.</h1>
+        <p>Optional features from the current local revision. The beginner flow still has four steps. Captured with example details and a clearly labelled synthetic log; no import was performed.</p>
+      </header>
+      <div class="screens">
+        <figure>
+          <figcaption><h2>Advanced, when you need it</h2><p>Collapsed under Custom. This scrolled view shows Takeout-specific album filtering, photo stacking, time zone, session tagging, and performance overrides.</p></figcaption>
+          <a href="advanced-desktop.png" target="_blank" rel="noopener"><img src="advanced-desktop.png" alt="Expanded optional Advanced controls in the Takeout Custom preset" /></a>
+        </figure>
+        <figure>
+          <figcaption><h2>A separate log-review view</h2><p>Reached from After you run it or Settings → Help. Choose a local log or try the sample; the unfinished wizard remains in memory.</p></figcaption>
+          <a href="log-review-start.png" target="_blank" rel="noopener"><img src="log-review-start.png" alt="Minimal log-reader starting screen with file selection and an optional sample" /></a>
+        </figure>
+        <figure>
+          <figcaption><h2>Reported counts, with context</h2><p>Recognised totals, grouped issues, and a notice when error messages conflict with a zero-error asset summary. This results section is scrolled into view.</p></figcaption>
+          <a href="log-review-report.png" target="_blank" rel="noopener"><img src="log-review-report.png" alt="Synthetic sample report with counts and a warning about an album-operation error" /></a>
+        </figure>
+        <figure>
+          <figcaption><h2>The original beginner flow</h2><p>The entry screen stays minimal. Advanced controls and log review are optional, with no additional required step.</p></figcaption>
+          <a href="../after.jpg" target="_blank" rel="noopener"><img src="../after.jpg" alt="Unchanged minimal four-step wizard entry screen" /></a>
+        </figure>
+      </div>
+      <nav aria-label="More previews">
+        <a href="advanced-mobile.png" target="_blank" rel="noopener">Advanced on mobile</a>
+        <a href="log-review-mobile.png" target="_blank" rel="noopener">Report on mobile</a>
+        <a href="log-review-mobile-notes.png" target="_blank" rel="noopener">Mobile review notices</a>
+        <a href="../process/">All four beginner steps</a>
+        <a href="../comparison.html">Published versus local</a>
+        <a href="/">Open the app</a>
+      </nav>
+      <footer><p>Captured October 16, 2026 · Local preview · No publishing or deployment</p></footer>
+    </main>
+  </body>
+</html>

@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Optional Advanced controls under Custom for source-specific album settings, burst/HEIC stacking, time zone, session tagging, explicit concurrency, and request timeout. Beginner presets are unchanged; unsupported controls are excluded for each source.
+- Local text/JSON log review with explicit file selection, a synthetic sample, grouped warnings/errors, separate appended runs, unknown-count handling, and summary consistency notices. Processing runs in a cancellable worker, with a 25 MiB limit and bounded excerpts. No log upload or persistence; returning preserves the unfinished wizard in page memory.
+
+### Fixed
+- Custom upload speed now changes concurrency in the generated command. An Advanced concurrency override takes precedence; Balanced retains the upstream default.
+
 ### Changed
 - Kept a plain light backdrop with soft gradient card artwork and a black Go Desktop wordmark. Replaced broad privacy guarantees with an explicit data-flow description, including host requests, plaintext saved keys, full-key exports, and dry-run server traffic. Connection tests now block redirects, omit ambient credentials/referrers, and time out. Added safer shell-specific quoting, complete preview-key masking, and resilient saved-connection controls with regression coverage.
 - Removed a machine-specific hostname from the flag registry and sanitized saved CLI-help captures. Removed the local branch label from the design comparison, made the command-test key an explicit fixture, and added ignore rules for environment files and private keys.

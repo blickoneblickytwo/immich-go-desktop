@@ -1,5 +1,5 @@
 /**
- * Verified immich-go flag registry.
+ * immich-go flag registry.
  *
  * Target CLI: immich-go version 0.32.0
  * Verification commands:
@@ -7,7 +7,8 @@
  * - immich-go upload from-google-photos --help
  * - immich-go upload from-immich --help
  * - immich-go upload from-icloud --help
- * Verification date: 2026-06-25
+ * Advanced options checked against tagged documentation/source on 2026-10-16.
+ * See IMMICH_GO_BASELINE.md for the remaining v0.32.0 binary-capture limitation.
  */
 
 export type UploadSource = "folder" | "takeout" | "immich" | "icloud";
@@ -362,7 +363,7 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
   concurrentTasks: {
     name: "--concurrent-tasks",
     type: "number",
-    default: 8,
+    default: "CPU cores",
     description: "Number of concurrent tasks (1-20)",
     appliesTo: "both",
   },

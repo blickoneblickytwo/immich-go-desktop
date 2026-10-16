@@ -1,6 +1,7 @@
 import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import { hasControlCharacters } from "@/lib/utils";
 import type { DetectedOS } from "@/lib/os";
+import { advancedFlags, defaultAdvancedOptions, type AdvancedOptions } from "@/lib/advanced-options";
 
 export type UploadSource = "folder" | "takeout" | "immich" | "icloud";
 export type PresetId =
@@ -44,6 +45,7 @@ export interface FriendlyState {
   customDateTo: string;
   customTag: string;
   showRawFlags: boolean;
+  advanced: AdvancedOptions;
 }
 
 export const REMEMBER_KEY = "immich-go-desktop.credentials.v1";
@@ -72,6 +74,7 @@ export const defaultFriendlyState: FriendlyState = {
   customDateTo: "",
   customTag: "",
   showRawFlags: false,
+  advanced: { ...defaultAdvancedOptions },
 };
 
 const TEST_RUN_PRESET: FriendlyPreset = {
@@ -202,7 +205,7 @@ function buildRawFlagLines(state: FriendlyState): string[] {
     lines.push(`${FLAG_REGISTRY.tag.name}=${state.customTag.trim()}`);
   }
 
-  return lines;
+  return [...lines, ...advancedFlags(state)];
 }
 
 export function getPresets(source: UploadSource | null): FriendlyPreset[] {

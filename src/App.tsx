@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "");
+const routerBasename = import.meta.env.BASE_URL;
 
 const App = () => (
   <LazyMotion features={domMin} strict>

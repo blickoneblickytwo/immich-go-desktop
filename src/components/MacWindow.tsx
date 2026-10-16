@@ -16,6 +16,7 @@ const MacWindow: React.FC<MacWindowProps> = ({ children, onSettingsClick }) => {
     const body = bodyRef.current;
     if (!body) return;
     const measure = () => {
+      if (body.getClientRects().length === 0) return;
       const stacked = window.matchMedia("(max-width: 640px)").matches;
       const gradientHeight = stacked ? gradientRef.current?.offsetHeight ?? 0 : 0;
       setHeight(Math.ceil(body.getBoundingClientRect().height) + gradientHeight + 20);

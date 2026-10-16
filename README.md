@@ -49,6 +49,20 @@ You'll need immich-go installed to run it. If you haven't installed it yet, foll
 
 The **Settings** link below the card opens Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
 
+### Optional Advanced controls
+
+In step 3, choose **Custom → Advanced** for destination/source album options, burst and HEIC/JPEG stacking, a time-zone override, session tagging, concurrency, and request timeout. Only supported controls appear for each source. Advanced starts collapsed; unchanged defaults add no flags, and its overrides apply only to Custom.
+
+Custom speed settings now affect concurrency: Slow uses 2 tasks, Fast uses 8, and Balanced leaves the choice to immich-go. An explicit concurrency value in Advanced takes precedence. Beginner presets keep their existing commands.
+
+### Review an import log
+
+After running immich-go separately, open **After you run it → Review an import log**, or **Settings → Help → Reading import results**. Select an existing UTF-8 text or JSON-lines log, up to 25 MiB, or try the clearly labelled synthetic sample.
+
+The reader shows recognised summary counts and grouped warnings/errors. Missing counts stay unknown, appended runs are reviewed separately, and errors outside the asset summary remain visible. This is an interpretation of the log, not verification of your library or a guarantee that every photo imported. Recognition is checked against immich-go v0.32.0; other formats may be only partially understood. See [the log format contract](docs/log-format-contract.md).
+
+Log contents are processed in a browser worker without being uploaded or saved by the app. Source excerpts can contain private information and remain collapsed. Clear log, return to the import wizard, or reload to discard the report from the view. Your original file stays unchanged. An unfinished wizard is preserved in page memory when you open the reader and return; reloading does not preserve that wizard state.
+
 ---
 
 ## How connection details are handled
@@ -58,7 +72,8 @@ The **Settings** link below the card opens Privacy, Help (API key permissions, r
 - **Remember is optional.** With Remember selected, Continue or a successful test saves the destination URL and any destination key as plain text in this site’s browser storage. The app does not encrypt this storage; scripts on the same origin can read it. Migration source details and photo paths are not saved. Unchecking Remember or clearing the saved connection in Settings removes that stored record and turns Remember off; storage failures are reported. Already entered form values remain in page memory until reset or reload.
 - **Exports include entered keys.** Copy command and Download as script include any keys you entered, even if the preview masks them. Clipboard history, script files, shell history, and running-process information can retain or expose those keys. Do not share them; use placeholders if you prefer to insert keys outside this page.
 - **Page loading still uses the network.** This version has no analytics or application backend receiving form details. The host serves the page, JavaScript, stylesheet, and bundled image and may log ordinary request metadata. See [GitHub’s privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). External help links open third-party sites. The connection test is an additional, optional request.
-- **The page does not read or upload your photos.** It builds text commands. immich-go performs the import separately on your computer. A test-run command skips photo uploads but still connects to your server.
+- **The app does not scan your photo library or upload photos.** The command builder produces text; the optional log reader reads only the file you select. immich-go performs the import separately on your computer. A test-run command skips photo uploads but still connects to your server.
+- **Log review reads the file you explicitly choose.** Contents and the resulting report stay in page/worker memory, with no log upload or new browser persistence. Loading this optional view fetches its app code and worker from the host. Browser extensions and other same-origin scripts remain separate trust boundaries.
 
 Inspect the source and your browser’s Network panel to check this version’s behavior, or [run it locally](#run-it-locally-optional). Local operation avoids loading the app from GitHub; connection tests and terminal imports still contact the server you specify. See [the privacy review](PRIVACY.md) for scope, safeguards, and remaining limits.
 
