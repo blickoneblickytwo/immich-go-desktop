@@ -40,7 +40,7 @@ const MacWindow: React.FC<MacWindowProps> = ({ children, onSettingsClick }) => {
         </div>
       </m.div>
       <footer className="app-meta">
-        <span>immich-go desktop</span>
+        <img className="app-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Go Desktop" width={219} height={55} />
         {onSettingsClick && <button type="button" onClick={onSettingsClick}>Settings</button>}
       </footer>
     </div>
