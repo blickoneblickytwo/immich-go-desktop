@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Import flow · Go Desktop</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f7f7f7; color: #252321; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+      main { max-width: 1440px; padding: 32px; margin: auto; }
+      h1 { margin: 0 0 8px; font-size: 30px; font-weight: 500; letter-spacing: -.04em; }
+      header { margin-bottom: 30px; }
+      p { color: #706b65; line-height: 1.6; margin: 0; font-size: 14px; }
+      .screens { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 24px; }
+      figure { margin: 0; min-width: 0; }
+      h2, summary { margin: 0 0 8px; font-size: 17px; font-weight: 500; }
+      figcaption { margin-bottom: 14px; }
+      img { display: block; width: 100%; border: 1px solid #e9e6e2; border-radius: 16px; }
+      a { color: inherit; text-underline-offset: 3px; }
+      a:focus-visible, summary:focus-visible { outline: 2px solid #252321; outline-offset: 5px; }
+      details { margin-top: 32px; }
+      summary { cursor: pointer; }
+      details img { max-width: 900px; margin-top: 16px; }
+      footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid #e9e6e2; }
+      @media (max-width: 700px) { main { padding: 24px 16px; } .screens { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>The import process</h1>
+        <p>Four steps from the current local app, using a folder import and example details. No connection test or import was run. Click any screenshot to open it at full size.</p>
+      </header>
+      <div class="screens">
+        <figure>
+          <figcaption><h2>1. Choose a source</h2><p>Pick a photo folder, Google Takeout, iCloud export, or another Immich server.</p></figcaption>
+          <a href="01-source.png" target="_blank" rel="noopener"><img src="01-source.png" alt="Step 1: Choose where your photos are coming from" /></a>
+        </figure>
+        <figure>
+          <figcaption><h2>2. Connect to Immich</h2><p>Enter the destination address. The API key and browser connection test are optional.</p></figcaption>
+          <a href="02-connect.png" target="_blank" rel="noopener"><img src="02-connect.png" alt="Step 2: Server address, optional API key, and Remember controls" /></a>
+        </figure>
+        <figure>
+          <figcaption><h2>3. Choose your import</h2><p>Add the photo path and choose a test run, simple upload, folder albums, or custom options.</p></figcaption>
+          <a href="03-options.png" target="_blank" rel="noopener"><img src="03-options.png" alt="Step 3: Photo path and import presets, with Test run selected" /></a>
+        </figure>
+        <figure>
+          <figcaption><h2>4. Get your command</h2><p>Review the generated command, then copy it or download a script to run separately.</p></figcaption>
+          <a href="04-command.png" target="_blank" rel="noopener"><img src="04-command.png" alt="Step 4: Test-run command with a placeholder key, copy and download actions" /></a>
+        </figure>
+      </div>
+      <details>
+        <summary>Show the lower section of step 4</summary>
+        <p>The command screen scrolls at this viewport size. Its lower section contains explanations, installation help, Back, and Start over.</p>
+        <a href="04-command-lower.png" target="_blank" rel="noopener"><img src="04-command-lower.png" alt="Lower command screen showing help, installation link, Back, and Start over" /></a>
+      </details>
+      <footer><p>Captured October 15, 2026 · Desktop viewport 1280 × 900 · <a href="/">Open the app</a></p></footer>
+    </main>
+  </body>
+</html>
