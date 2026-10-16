@@ -6,7 +6,7 @@ Reviewed October 15, 2026. This describes the current client code and production
 
 | Action | What happens |
 | --- | --- |
-| Load the app | The browser requests the page, bundled JavaScript, stylesheet, icons, and landscape image from the app host. The app has no analytics SDK or application backend collecting form details. Hosting infrastructure may record request metadata. |
+| Load the app | The browser requests the page, bundled JavaScript, stylesheet, and branding images from the app host. The app has no analytics SDK or application backend collecting form details. Hosting infrastructure may record request metadata. |
 | Enter connection details | Values are held in page memory. Blank key fields become placeholders in the generated command. The page does not read photo files. |
 | Continue | The app builds a command locally. If Remember is selected, it stores the destination address and any destination key in browser localStorage. Otherwise it attempts to remove that stored record. No connection test is run by Continue. |
 | Test connection | The browser makes one GET request to the entered destination base URL plus `/api/server/about`, using the destination key in the `x-api-key` header. It does not test or send the source key. |
@@ -23,7 +23,7 @@ Reviewed October 15, 2026. This describes the current client code and production
 - Saved keys are plain text, not encrypted by this app. localStorage is scoped to an origin, not a repository path: other scripts on that origin can access it. This matters for multiple projects served under the same GitHub Pages domain. Do not save keys on shared devices.
 - Preview keys are replaced before shell formatting, so punctuation and spaces do not leave partial key fragments visible. This is visual masking, not encryption or removal from page memory.
 - PowerShell exports use literal single-quoted strings. Unix shell strings escape apostrophes. CMD exports reject quotes, percent signs, and exclamation marks instead of trying to share unsafe interpolation rules between interactive and batch execution; use PowerShell for those values. Control characters and embedded line breaks are rejected. Photo paths starting with a hyphen are rejected so they cannot override command options; use a full path or `./` prefix. These controls do not make arbitrary unreviewed commands safe to execute.
-- The app's landscape image and other runtime assets are bundled with the app. External help links use `noreferrer` and open third-party sites only when followed.
+- Runtime assets are bundled with the app; the card artwork is a CSS gradient. External help links use `noreferrer` and open third-party sites only when followed.
 
 ## Limits to the wording
 

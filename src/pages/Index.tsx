@@ -1024,7 +1024,6 @@ const Index = () => {
         onTabChange={setSettingsTab}
         onForgetSavedConnection={() => update({ rememberOnDevice: false })}
       />
-      <span className="photo-credit">Photo by Luca Micheli on Unsplash</span>
     </div>
   );
 };
