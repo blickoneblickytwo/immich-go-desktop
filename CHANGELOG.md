@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Changed
+- Restored the original bundled landscape with a muted peach/lilac treatment. Replaced broad privacy guarantees with an explicit data-flow description, including host requests, plaintext saved keys, full-key exports, and dry-run server traffic. Connection tests now block redirects, omit ambient credentials/referrers, and time out. Added safer shell-specific quoting, complete preview-key masking, and resilient saved-connection controls with regression coverage.
 - Removed a machine-specific hostname from the flag registry and sanitized saved CLI-help captures. Removed the local branch label from the design comparison, made the command-test key an explicit fixture, and added ignore rules for environment files and private keys.
 - Adopted PolyForm Noncommercial 1.0.0 for this revision, with a separate written license required for commercial use outside its permitted purposes. Added GitHub commercial-license requests and updated the README, package metadata, and Settings. Preserved the previous MIT notice and existing MIT rights; third-party licenses are unchanged.
 - Gave the gradient a distinct peach, cream, and lilac composition. Refined Settings with concise sections, clear saved-connection status, accessible copy feedback, expandable help, and a bounded scrolling layout. Updated the design comparison against the actual published app.

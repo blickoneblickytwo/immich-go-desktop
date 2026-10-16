@@ -3,12 +3,13 @@ import { ArrowUpRight, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { API_KEY_PLACEHOLDER, REMEMBER_KEY } from "@/lib/friendly-flow";
+import { API_KEY_PLACEHOLDER } from "@/lib/friendly-flow";
+import { clearSavedConnection, readSavedConnection } from "@/lib/connection-storage";
 
 const APP_VERSION = "0.3.0";
 const IMMICH_GO_BASELINE = "v0.32.0";
 const REPOSITORY = "https://github.com/blickoneblickytwo/immich-go-desktop";
-const MINIMAL_PERMISSIONS = [
+const IMPORT_PERMISSIONS = [
   "asset.read", "asset.statistics", "asset.update", "asset.upload", "asset.copy",
   "asset.delete", "asset.download", "album.create", "album.read", "albumAsset.create",
   "server.about", "stack.create", "tag.asset", "tag.create", "user.read",
@@ -19,6 +20,7 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   tab: "privacy" | "help" | "about";
   onTabChange: (tab: "privacy" | "help" | "about") => void;
+  onForgetSavedConnection: () => void;
 }
 
 function ResourceLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -36,7 +38,7 @@ function CopyPermissionsButton() {
   }, [status]);
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(MINIMAL_PERMISSIONS.join(", "));
+      await navigator.clipboard.writeText(IMPORT_PERMISSIONS.join(", "));
       setStatus("copied");
     } catch {
       setStatus("error");
@@ -52,27 +54,16 @@ function CopyPermissionsButton() {
   </div>;
 }
 
-function SavedConnection() {
-  const readSaved = () => {
-    try {
-      const raw = localStorage.getItem(REMEMBER_KEY);
-      if (!raw) return { saved: false, keySaved: false, available: true };
-      let keySaved = false;
-      try { keySaved = Boolean(JSON.parse(raw).apiKey); } catch { /* Keep malformed entries clearable. */ }
-      return { saved: true, keySaved, available: true };
-    } catch {
-      return { saved: false, keySaved: false, available: false };
-    }
-  };
-  const [connection, setConnection] = useState(readSaved);
+function SavedConnection({ onCleared }: { onCleared: () => void }) {
+  const [connection, setConnection] = useState(readSavedConnection);
   const [message, setMessage] = useState("");
   const clear = () => {
-    try {
-      localStorage.removeItem(REMEMBER_KEY);
-      setConnection({ saved: false, keySaved: false, available: true });
-      setMessage("Saved connection cleared from this browser.");
-    } catch {
-      setMessage("Unable to clear browser storage. Try clearing this site’s data in your browser settings.");
+    if (clearSavedConnection()) {
+      setConnection(readSavedConnection());
+      onCleared();
+      setMessage("Saved details cleared and Remember switched off. Values already in the form remain until you start over or reload.");
+    } else {
+      setMessage("Unable to clear browser storage. Clear this site’s data in your browser settings.");
     }
   };
   return <section className="settings-section">
@@ -81,14 +72,15 @@ function SavedConnection() {
       <span className="settings-status">{!connection.available ? "Unavailable" : connection.saved ? "Saved locally" : "Not saved"}</span>
     </div>
     <p>{!connection.available ? "Browser storage is unavailable. Check this site’s storage permissions in your browser settings." : connection.saved
-      ? connection.keySaved ? "Your server address and API key are stored in this browser." : "Your server address is stored in this browser. No API key is saved."
-      : "Connection details are saved only when you choose Remember on this device."}</p>
+      ? !connection.connection ? "Stored data could not be restored. You can clear it below." : connection.connection.apiKey ? "Your destination address and API key are saved as plain text in this browser." : "Your destination address is saved in this browser. No API key is saved."
+      : "Remember saves destination details on Continue or after a successful connection test. Source-server details are not saved."}</p>
+    <p className="settings-note">Saved details are not encrypted by this app and can be read by scripts on the same origin. Avoid saving keys on shared devices.</p>
     {connection.saved && <Button variant="outline" size="sm" onClick={clear}>Clear saved connection</Button>}
     <p className="settings-note" role="status">{message}</p>
   </section>;
 }
 
-export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }: SettingsDialogProps) {
+export default function SettingsDialog({ open, onOpenChange, tab, onTabChange, onForgetSavedConnection }: SettingsDialogProps) {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent
@@ -116,35 +108,38 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange }:
         <div className="settings-body">
           <TabsContent value="privacy" className="settings-panel">
             <section className="settings-section">
-              <h3>Your API key stays under your control</h3>
-              <p>Leave the key field blank to add <code>{API_KEY_PLACEHOLDER}</code> yourself after copying the command.</p>
-              <p>If you enter a key, it is sent to your Immich server only when you choose Test connection. Otherwise it is used to build the command in this browser.</p>
+              <h3>Keys and commands</h3>
+              <p>Leave the destination key blank to add <code>{API_KEY_PLACEHOLDER}</code> yourself after copying the command.</p>
+              <p>The connection test sends the destination key to the server address you enter. Redirects are blocked; the source server is not tested. HTTPS encrypts the connection; HTTP does not.</p>
+              <p>Copied commands and downloaded scripts contain any entered keys, even when the preview hides them. Your clipboard, saved scripts, and shell history may retain them.</p>
             </section>
-            <SavedConnection />
+            <SavedConnection onCleared={onForgetSavedConnection} />
             <section className="settings-section">
-              <h3>No analytics or app backend</h3>
-              <p>This command builder has no analytics or application backend. The photo import runs separately through immich-go on your computer.</p>
+              <h3>This page and its host</h3>
+              <p>This version has no analytics or app backend receiving form details. The host serves the page and its assets and may log request metadata. External help links open third-party sites.</p>
+              <p>The page does not read or upload your photos. Run the generated command separately through immich-go to import them.</p>
+              <ResourceLink href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub hosting privacy</ResourceLink>
               <ResourceLink href={REPOSITORY + "#run-it-locally-optional"}>Run the app locally</ResourceLink>
             </section>
           </TabsContent>
           <TabsContent value="help" className="settings-panel">
             <section className="settings-section">
               <h3>Start with a test run</h3>
-              <p>Preview the import first. When you are ready, choose a live upload and run the generated command in your terminal.</p>
+              <p>A test run skips photo uploads but still makes server requests. When you are ready, choose a live upload and run the generated command in your terminal.</p>
               <ResourceLink href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key">Create an Immich API key</ResourceLink>
             </section>
             <details className="quiet-details settings-detail">
-              <summary>Required API permissions</summary>
+              <summary>Import API permissions</summary>
               <div className="details-content">
-                <p className="settings-note">Use these permissions for a scoped API key.</p>
-                <ul className="permission-list">{MINIMAL_PERMISSIONS.map((permission) => <li key={permission}><code>{permission}</code></li>)}</ul>
+                <p className="settings-note">Review these baseline import permissions against your source and options. The browser connection test only checks the destination server-info endpoint; it does not validate every import permission.</p>
+                <ul className="permission-list">{IMPORT_PERMISSIONS.map((permission) => <li key={permission}><code>{permission}</code></li>)}</ul>
                 <CopyPermissionsButton />
                 <p className="settings-note">Add <code>job.create</code> and <code>job.read</code> on an admin-linked key if you want to pause background jobs.</p>
               </div>
             </details>
             <details className="quiet-details settings-detail">
               <summary>Why a connection test can fail</summary>
-              <p className="details-content settings-note">Check the server URL and key. Browser restrictions, CORS, or a VPN can also prevent the test from reaching your server. The test never blocks Continue; verify your connection details before running the command.</p>
+              <p className="details-content settings-note">Check the server URL and key. Browser restrictions, CORS, a redirect, or a VPN can also prevent the test from completing. It times out after 10 seconds. The test never blocks Continue; verify your connection details before running the command.</p>
             </details>
             <details className="quiet-details settings-detail">
               <summary>Reading import results</summary>

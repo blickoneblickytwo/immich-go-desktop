@@ -11,9 +11,9 @@ import { detectOS } from "@/lib/os";
 import { FLAG_REGISTRY } from "@/lib/flag-registry";
 import {
   API_KEY_PLACEHOLDER,
-  REMEMBER_KEY,
   SOURCE_API_KEY_PLACEHOLDER,
   buildFriendlyCommand,
+  buildMaskedCommand,
   type CommandShell,
   defaultFriendlyState,
   getCommandChecklist,
@@ -24,6 +24,7 @@ import {
   getRawFlagPreview,
   getSourceLabel,
   getSupportedShells,
+  isDryRun as isTestRun,
   sourceUsesPath,
   type FriendlyState,
   type UploadSource,
@@ -46,6 +47,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { parseServerUrl, testDestinationConnection } from "@/lib/connection";
+import { clearSavedConnection, readSavedConnection, saveConnection } from "@/lib/connection-storage";
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Loader2, XCircle } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 
@@ -110,6 +113,8 @@ const Index = () => {
   const [windowsShell, setWindowsShell] = useState<"windows-powershell" | "windows-cmd">("windows-powershell");
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
+  const [storageMessage, setStorageMessage] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"privacy" | "help" | "about">("privacy");
@@ -137,25 +142,25 @@ const Index = () => {
   }, [step]);
 
   useEffect(() => {
-    const raw = localStorage.getItem(REMEMBER_KEY);
-    if (!raw) return;
-    try {
-      const remembered = JSON.parse(raw) as { serverUrl?: string; apiKey?: string };
-      if (remembered.serverUrl || remembered.apiKey) {
-        setState((prev) => ({
-          ...prev,
-          serverUrl: remembered.serverUrl ?? prev.serverUrl,
-          apiKey: remembered.apiKey ?? prev.apiKey,
-          rememberOnDevice: true,
-        }));
-      }
-    } catch {
-      // Ignore malformed local storage.
+    const saved = readSavedConnection();
+    if (saved.connection) {
+      setState((prev) => ({ ...prev, ...saved.connection, rememberOnDevice: true }));
     }
   }, []);
 
+  useEffect(() => { setShowKey(false); }, [state.apiKey, state.fromApiKey]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   const reset = useCallback(() => {
     setState({ ...defaultFriendlyState });
+    setShowKey(false);
+    setCopyError("");
+    setStorageMessage("");
     setStep(1);
     setServerError("");
     setApiKeyError("");
@@ -168,9 +173,15 @@ const Index = () => {
 
   const presets = useMemo(() => getPresets(state.source), [state.source]);
   const selectedSource = sourceOptions.find((source) => source.id === state.source);
-  const command = useMemo(() => buildFriendlyCommand(state, os, selectedShell), [state, os, selectedShell]);
+  const { command, maskedCommand, commandError } = useMemo(() => {
+    try {
+      return { command: buildFriendlyCommand(state, os, selectedShell), maskedCommand: buildMaskedCommand(state, os, selectedShell), commandError: "" };
+    } catch (error) {
+      return { command: "", maskedCommand: "", commandError: error instanceof Error ? error.message : "Check your command inputs." };
+    }
+  }, [state, os, selectedShell]);
   const checklist = useMemo(() => getCommandChecklist(state, os), [state, os]);
-  const isDryRun = command.includes(FLAG_REGISTRY.dryRun.name);
+  const isDryRun = isTestRun(state);
   const missingDestKey = !state.apiKey.trim();
   const missingSourceKey = state.source === "immich" && !state.fromApiKey.trim();
   const usesKeyPlaceholder = missingDestKey || missingSourceKey;
@@ -186,21 +197,10 @@ const Index = () => {
     ? "Gentle on your server"
     : state.customSpeed === "fast"
       ? "Fastest throughput"
-      : "Balanced speed and safety";
+      : "Balanced resource use";
 
   const highlightedCommand = useMemo(() => {
-    // Masks both --api-key= (destination) and --from-api-key= (from-immich source) —
-    // but leaves placeholder values (YOUR_API_KEY / YOUR_SOURCE_API_KEY) visible, since
-    // the whole point is that the user can see exactly what to swap in.
-    const masked = showKey
-      ? command
-      : command.replace(
-          new RegExp(`(--(?:from-)?api-key=)([^\\s\\\\` + "`" + `]+)`, "g"),
-          (fullMatch, prefix, value) => {
-            if (value === API_KEY_PLACEHOLDER || value === SOURCE_API_KEY_PLACEHOLDER) return fullMatch;
-            return `${prefix}●●●●●●●●`;
-          }
-        );
+    const masked = showKey ? command : maskedCommand;
     const parts = masked.split(FLAG_REGISTRY.dryRun.name);
     return parts.reduce<React.ReactNode[]>((acc, segment, index) => {
       if (index > 0) {
@@ -213,7 +213,7 @@ const Index = () => {
       if (segment) acc.push(<span key={`seg-${index}`}>{segment}</span>);
       return acc;
     }, []);
-  }, [command, showKey]);
+  }, [command, maskedCommand, showKey]);
 
   const handleSourceContinue = () => {
     if (!state.source) return;
@@ -229,7 +229,7 @@ const Index = () => {
   // Continue doesn't — a blank key becomes a placeholder in the generated command, so
   // it never has to touch this page at all). Format issues on a non-empty key (short,
   // unusual shape) are always just a soft warning, never a blocker.
-  const requiredFieldsPresent = useCallback((opts?: { requireKey?: boolean }) => {
+  const requiredFieldsPresent = useCallback((opts?: { requireKey?: boolean; destinationOnly?: boolean }) => {
     const requireKey = opts?.requireKey ?? false;
     const server = state.serverUrl.trim();
     const key = state.apiKey.trim();
@@ -243,9 +243,11 @@ const Index = () => {
     if (!server) {
       setServerError("Enter your Immich server URL.");
       missing = true;
-    } else if (!/^https?:\/\//i.test(server)) {
-      setServerError("Don't forget http:// or https:// at the start.");
-      missing = true;
+    } else {
+      try { parseServerUrl(server); } catch (error) {
+        setServerError(error instanceof Error ? error.message : "Check the server address.");
+        missing = true;
+      }
     }
     if (!key) {
       if (requireKey) {
@@ -258,35 +260,28 @@ const Index = () => {
         setApiKeyWarning(keyValidation.message);
       }
     }
-    if (state.source === "immich") {
+    if (state.source === "immich" && !opts?.destinationOnly) {
       const fromServer = state.fromServerUrl.trim();
       if (!fromServer) {
         setFromServerError("Enter the source Immich server URL.");
         missing = true;
-      } else if (!/^https?:\/\//i.test(fromServer)) {
-        setFromServerError("Don't forget http:// or https:// at the start.");
-        missing = true;
-      }
-      if (!state.fromApiKey.trim() && requireKey) {
-        setFromApiKeyError("Enter your source key to test, or continue without one.");
-        missing = true;
+      } else {
+        try { parseServerUrl(fromServer); } catch (error) {
+          setFromServerError(error instanceof Error ? error.message : "Check the source server address.");
+          missing = true;
+        }
       }
     }
     return !missing;
-  }, [state.serverUrl, state.apiKey, state.source, state.fromServerUrl, state.fromApiKey]);
+  }, [state.serverUrl, state.apiKey, state.source, state.fromServerUrl]);
 
   const rememberCredentials = useCallback(() => {
-    if (state.rememberOnDevice) {
-      const key = state.apiKey.trim();
-      localStorage.setItem(
-        REMEMBER_KEY,
-        JSON.stringify(
-          key ? { serverUrl: state.serverUrl.trim(), apiKey: key } : { serverUrl: state.serverUrl.trim() }
-        )
-      );
-    } else {
-      localStorage.removeItem(REMEMBER_KEY);
-    }
+    const success = state.rememberOnDevice
+      ? saveConnection({ serverUrl: state.serverUrl, apiKey: state.apiKey })
+      : clearSavedConnection();
+    setStorageMessage(success ? "" : state.rememberOnDevice
+      ? "Browser storage is unavailable. Connection details were not saved; you can still continue."
+      : "Could not clear saved details. Clear this site’s data in your browser settings.");
   }, [state.rememberOnDevice, state.serverUrl, state.apiKey]);
 
   // Continue always works once the fields the command needs are present — the
@@ -300,29 +295,28 @@ const Index = () => {
   const runConnectionTest = async () => {
     setTestStatus("idle");
     setTestMessage("");
-    if (!requiredFieldsPresent({ requireKey: true })) return;
+    if (!requiredFieldsPresent({ requireKey: true, destinationOnly: true })) return;
 
     const server = state.serverUrl.trim();
     const key = state.apiKey.trim();
     setConnecting(true);
     try {
-      const url = server.replace(/\/+$/, "");
-      const response = await fetch(`${url}/api/server/about`, {
-        headers: { "x-api-key": key },
-      });
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          setTestStatus("error");
-          setTestMessage("Server reached, but the API key was rejected. You can still Continue if you're sure it's right.");
-          return;
-        }
+      const result = await testDestinationConnection(server, key);
+      if (result.status < 200 || result.status >= 300) {
         setTestStatus("error");
-        setTestMessage(`Server responded with HTTP ${response.status}. You can still Continue.`);
+        setTestMessage(result.status === 401 || result.status === 403
+          ? "The server rejected this test. Check the destination key and server.about permission; Continue still works."
+          : `Server responded with HTTP ${result.status}. You can still Continue.`);
+        return;
+      }
+      if (!result.isImmichResponse) {
+        setTestStatus("warning");
+        setTestMessage("The server responded without Immich version information. Check the base URL; Continue still works.");
         return;
       }
 
       setTestStatus("success");
-      setTestMessage("Connected successfully.");
+      setTestMessage("Destination server responded. This does not verify all import permissions or the source server.");
       rememberCredentials();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -332,31 +326,37 @@ const Index = () => {
       if (likelyCorsOrNetwork && privateHost) {
         setTestStatus("warning");
         setTestMessage(
-          "Browser blocked the test request (likely CORS). This is common for local IPs like 192.168.x.x — Continue still works, this check is just informational."
+          "The test could not complete. Check the address, CORS, redirects, and local-network access. Continue still works."
         );
         return;
       }
 
       if (likelyCorsOrNetwork) {
         setTestStatus("warning");
-        setTestMessage("Network or CORS blocked the browser test. Continue still works — this check is just informational.");
+        setTestMessage("The browser could not complete the test. Network restrictions, CORS, or a redirect may be responsible. Continue still works.");
         return;
       }
 
       setTestStatus("error");
-      setTestMessage("Couldn't reach the server. You can still Continue if you're sure the URL/key are correct.");
+      setTestMessage("The test failed or timed out. Verify the destination URL and key before running your command.");
     } finally {
       setConnecting(false);
     }
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(command);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    if (commandError) return;
+    setCopyError("");
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+    } catch {
+      setCopyError("Clipboard access failed. Reveal the key if needed, then select and copy the command.");
+    }
   };
 
   const handleDownloadScript = () => {
+    if (commandError) return;
     const ext = selectedShell === "windows-cmd" ? "cmd" : selectedShell === "windows-powershell" ? "ps1" : "sh";
     const blob = new Blob([`${command}\n`], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
@@ -401,6 +401,7 @@ const Index = () => {
     <div className="import-page">
       <MacWindow onSettingsClick={() => { setSettingsTab("privacy"); setSettingsOpen(true); }}>
         <StepIndicator currentStep={step} totalSteps={4} labels={stepLabels} />
+        {storageMessage && <p role="status" className="mb-4 text-xs text-destructive">{storageMessage}</p>}
         {step >= 3 && (
           <div className="platform-control">
             <DropdownMenu>
@@ -535,6 +536,7 @@ const Index = () => {
                 spellCheck={false}
               />
               {serverError && <p className="text-xs text-destructive">{serverError}</p>}
+              {state.serverUrl.trim().toLowerCase().startsWith("http://") && <p className="text-xs text-step-active">HTTP does not encrypt the connection-test key. Use HTTPS when available.</p>}
             </div>
 
             <div className="space-y-2">
@@ -582,7 +584,13 @@ const Index = () => {
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={state.rememberOnDevice}
-                onCheckedChange={(checked) => update({ rememberOnDevice: Boolean(checked) })}
+                onCheckedChange={(checked) => {
+                  const remember = Boolean(checked);
+                  update({ rememberOnDevice: remember });
+                  if (!remember && !clearSavedConnection()) {
+                    setStorageMessage("Could not clear saved details. Clear this site’s data in your browser settings.");
+                  } else { setStorageMessage(""); }
+                }}
               />
               Remember on this device
             </label>
@@ -610,7 +618,7 @@ const Index = () => {
               <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="ghost" onClick={runConnectionTest} disabled={connecting}>
                   {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Test connection
+                  {state.source === "immich" ? "Test destination" : "Test connection"}
                 </Button>
                 <Button className="round-action" size="icon" onClick={proceed} aria-label="Continue" title="Continue"><ArrowRight aria-hidden="true" /></Button>
               </div>
@@ -714,7 +722,7 @@ const Index = () => {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Yes means nothing gets uploaded until you disable it.
+                    Photo uploads are disabled, but a test run still makes server requests.
                   </p>
                 </div>
 
@@ -869,8 +877,8 @@ const Index = () => {
                 : "text-destructive"
             )}>
               {isDryRun
-                ? "Test run. Nothing will upload."
-                : "Live upload. This command will upload your files."}
+                ? "Test run. No photo uploads; server requests still occur when run."
+                : "Live upload. This command uploads photos when run."}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -909,29 +917,34 @@ const Index = () => {
               </div>
             )}
 
-            <div className="command-panel rounded-2xl bg-terminal-bg p-5">
+            {commandError && <p role="alert" className="text-sm text-destructive">{commandError}</p>}
+            {!commandError && <div className="command-panel rounded-2xl bg-terminal-bg p-5">
               <pre className="text-sm font-mono text-terminal-fg overflow-x-auto whitespace-pre leading-relaxed">
                 <span className="text-terminal-green select-none">$ </span>
                 {highlightedCommand}
               </pre>
-            </div>
+            </div>}
 
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="lg"
                 className="min-w-[220px]"
                 onClick={handleCopy}
+                disabled={Boolean(commandError)}
               >
                 {copied ? <CheckCircle2 className="h-4 w-4" /> : null}
                 {copied ? "Copied" : "Copy command"}
               </Button>
-              <Button variant="link" onClick={handleDownloadScript}>
+              <Button variant="link" onClick={handleDownloadScript} disabled={Boolean(commandError)}>
                 Download as script
               </Button>
               {Boolean(state.apiKey.trim() || (state.source === "immich" && state.fromApiKey.trim())) && <Button variant="ghost" onClick={() => setShowKey((v) => !v)}>
                 {showKey ? "Hide key" : "Reveal key"}
               </Button>}
             </div>
+
+            <p className="text-xs text-muted-foreground">Copied commands and downloaded scripts include any keys you entered, even when the preview hides them. Keep them private.</p>
+            {copyError && <p role="status" className="text-xs text-destructive">{copyError}</p>}
 
             <details className="quiet-details">
               <summary>What does this command do?</summary>
@@ -946,10 +959,9 @@ const Index = () => {
               <summary>After you run it</summary>
               <p className="details-content text-sm text-muted-foreground">
                 immich-go prints its progress as it goes. When it's done, check your Immich library
-                — if your photos are there, you're all set. A line like{" "}
+                and review the final summary. A line like{" "}
                 <code className="font-mono text-xs">WARNING: N assets did not reach a final state</code>{" "}
-                is usually harmless (common with multi-part Google Takeout exports) — it doesn't
-                mean anything failed. See{" "}
+                needs a check for missing photos and a review of the log before treating the import as complete. See{" "}
                 <button
                   type="button"
                   onClick={() => { setSettingsTab("help"); setSettingsOpen(true); }}
@@ -1010,7 +1022,9 @@ const Index = () => {
         onOpenChange={setSettingsOpen}
         tab={settingsTab}
         onTabChange={setSettingsTab}
+        onForgetSavedConnection={() => update({ rememberOnDevice: false })}
       />
+      <span className="photo-credit">Photo by Luca Micheli on Unsplash</span>
     </div>
   );
 };

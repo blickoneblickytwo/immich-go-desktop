@@ -384,7 +384,7 @@ export const FLAG_REGISTRY: Record<string, FlagDefinition> = {
     name: "--dry-run",
     type: "boolean",
     default: false,
-    description: "Simulate actions without uploading",
+    description: "Simulate without uploading photos; server requests still occur",
     appliesTo: "both",
   },
   logFile: {

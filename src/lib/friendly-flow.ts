@@ -1,4 +1,5 @@
 import { FLAG_REGISTRY } from "@/lib/flag-registry";
+import { hasControlCharacters } from "@/lib/utils";
 import type { DetectedOS } from "@/lib/os";
 
 export type UploadSource = "folder" | "takeout" | "immich" | "icloud";
@@ -48,8 +49,7 @@ export interface FriendlyState {
 export const REMEMBER_KEY = "immich-go-desktop.credentials.v1";
 
 // Shown in the generated command when the corresponding key field is left blank — the
-// key never has to touch this page at all. Uppercase + underscore only, so it's a valid
-// unquoted token on every shell (see shellQuote's safe-charset check below).
+// key never has to touch this page at all. Shell formatting keeps this placeholder literal.
 export const API_KEY_PLACEHOLDER = "YOUR_API_KEY";
 export const SOURCE_API_KEY_PLACEHOLDER = "YOUR_SOURCE_API_KEY";
 
@@ -77,7 +77,7 @@ export const defaultFriendlyState: FriendlyState = {
 const TEST_RUN_PRESET: FriendlyPreset = {
   id: "test-run",
   title: "Test run",
-  subtitle: "See what would happen without uploading anything",
+  subtitle: "Preview the import without uploading photos",
   hint: "Perfect for your first time.",
   recommended: true,
 };
@@ -97,20 +97,20 @@ const FOLDER_PRESETS: FriendlyPreset[] = [
 ];
 
 const TAKEOUT_PRESETS: FriendlyPreset[] = [
-  { ...TEST_RUN_PRESET, subtitle: "Preview the import without uploading" },
+  TEST_RUN_PRESET,
   { id: "standard", title: "Standard import", subtitle: "Import everything and recreate your albums" },
   { id: "clean", title: "Fresh start", subtitle: "Skip archived and partner-shared photos" },
   CUSTOM_PRESET,
 ];
 
 const ICLOUD_PRESETS: FriendlyPreset[] = [
-  { ...TEST_RUN_PRESET, subtitle: "Preview the import without uploading" },
+  TEST_RUN_PRESET,
   { id: "standard", title: "Standard import", subtitle: "Import everything and turn Memories into albums" },
   CUSTOM_PRESET,
 ];
 
 const IMMICH_PRESETS: FriendlyPreset[] = [
-  { ...TEST_RUN_PRESET, subtitle: "Preview the migration without copying anything" },
+  { ...TEST_RUN_PRESET, subtitle: "Preview the migration without copying photos" },
   { id: "standard", title: "Migrate everything", subtitle: "Copy all assets from the source server" },
   { id: "favorites", title: "Favorites only", subtitle: "Copy just the favorite assets" },
   CUSTOM_PRESET,
@@ -121,14 +121,23 @@ export function sourceUsesPath(source: UploadSource | null): boolean {
   return source !== "immich";
 }
 
-function shellQuote(value: string, os: DetectedOS): string {
-  if (!value) return '""';
-  if (os === "windows") return `"${value}"`;
+function shellQuote(value: string, shell: CommandShell): string {
+  if (hasControlCharacters(value)) {
+    throw new Error("Remove line breaks and control characters from your connection details, path, and options.");
+  }
+  if (shell === "windows-cmd") {
+    // These characters cannot share reliable literal quoting between interactive CMD
+    // and downloaded .cmd files. PowerShell supports them without interpolation.
+    if (/["%!]/.test(value)) throw new Error('For values containing %, !, or double quotes, choose PowerShell instead of CMD.');
+    return `"${value.replace(/(\\+)$/, "$1$1")}"`;
+  }
+  if (shell === "windows-powershell") return `'${value.replace(/'/g, "''")}'`;
+  if (!value) return "''";
   if (/^[a-zA-Z0-9_./:@=*-]+$/.test(value)) return value;
   return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
-function isDryRun(state: FriendlyState): boolean {
+export function isDryRun(state: FriendlyState): boolean {
   if (state.preset === "test-run") return true;
   if (state.preset === "custom") return state.customDryRun;
   return false;
@@ -271,29 +280,33 @@ export function buildFriendlyCommand(state: FriendlyState, os: DetectedOS, shell
   const source = state.source ?? "folder";
 
   const parts: string[] = [getBinaryName(selectedShell)];
-  parts.push(`${FLAG_REGISTRY.server.name}=${shellQuote(state.serverUrl, os)}`);
-  parts.push(`${FLAG_REGISTRY.apiKey.name}=${shellQuote(state.apiKey.trim() || API_KEY_PLACEHOLDER, os)}`);
+  parts.push(`${FLAG_REGISTRY.server.name}=${shellQuote(state.serverUrl.trim(), selectedShell)}`);
+  parts.push(`${FLAG_REGISTRY.apiKey.name}=${shellQuote(state.apiKey.trim() || API_KEY_PLACEHOLDER, selectedShell)}`);
   parts.push(getSubcommand(source));
 
   // Server-to-server migrations point at a source server instead of a local path.
   if (source === "immich") {
-    parts.push(`${FLAG_REGISTRY.fromServer.name}=${shellQuote(state.fromServerUrl, os)}`);
+    parts.push(`${FLAG_REGISTRY.fromServer.name}=${shellQuote(state.fromServerUrl.trim(), selectedShell)}`);
     parts.push(
-      `${FLAG_REGISTRY.fromApiKey.name}=${shellQuote(state.fromApiKey.trim() || SOURCE_API_KEY_PLACEHOLDER, os)}`
+      `${FLAG_REGISTRY.fromApiKey.name}=${shellQuote(state.fromApiKey.trim() || SOURCE_API_KEY_PLACEHOLDER, selectedShell)}`
     );
   }
 
   for (const flag of buildRawFlagLines(state)) {
-    const [name, value] = flag.split("=", 2);
+    const equals = flag.indexOf("=");
+    const name = equals < 0 ? flag : flag.slice(0, equals);
+    const value = equals < 0 ? undefined : flag.slice(equals + 1);
     if (value === undefined) {
       parts.push(name);
     } else {
-      parts.push(`${name}=${shellQuote(value, os)}`);
+      parts.push(`${name}=${shellQuote(value, selectedShell)}`);
     }
   }
 
   if (sourceUsesPath(source)) {
-    parts.push(shellQuote(state.inputPath || getPathPlaceholder(source, os), os));
+    const path = state.inputPath || getPathPlaceholder(source, os);
+    if (path.startsWith("-")) throw new Error("Use a full photo path, or prefix a relative path with ./, so it cannot be interpreted as a command option.");
+    parts.push(shellQuote(path, selectedShell));
   }
 
   return parts
@@ -308,21 +321,28 @@ export function buildFriendlyCommand(state: FriendlyState, os: DetectedOS, shell
     .join("");
 }
 
+export function buildMaskedCommand(state: FriendlyState, os: DetectedOS, shell: CommandShell): string {
+  return buildFriendlyCommand({
+    ...state,
+    apiKey: state.apiKey.trim() ? "●●●●●●●●" : "",
+    fromApiKey: state.fromApiKey.trim() ? "●●●●●●●●" : "",
+  }, os, shell);
+}
+
 export function getCommandChecklist(state: FriendlyState, os: DetectedOS): string[] {
   const source = state.source ?? "folder";
   const dryLine = isDryRun(state)
     ? source === "immich"
-      ? "Simulates migration (nothing copied)"
-      : "Simulates upload (nothing sent)"
+      ? "Simulates migration without copying photos; still makes server requests"
+      : "Simulates upload without uploading photos; still makes server requests"
     : source === "immich"
       ? "Copies real assets between servers"
       : "Uploads real files to your server";
 
-  const usesPlaceholder =
-    !state.apiKey.trim() || (source === "immich" && !state.fromApiKey.trim());
-  const placeholderLine = usesPlaceholder
-    ? [`Contains ${API_KEY_PLACEHOLDER} — swap in your real key before running`]
-    : [];
+  const placeholderLine = [
+    ...(!state.apiKey.trim() ? [`Contains ${API_KEY_PLACEHOLDER} — swap in your destination key before running`] : []),
+    ...(source === "immich" && !state.fromApiKey.trim() ? [`Contains ${SOURCE_API_KEY_PLACEHOLDER} — swap in your source key before running`] : []),
+  ];
 
   if (source === "immich") {
     return [

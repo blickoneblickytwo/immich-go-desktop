@@ -63,9 +63,9 @@ describe("blank API key falls back to a placeholder", () => {
     expect(cmd).toContain(`--api-key=${API_KEY_PLACEHOLDER}`);
   });
 
-  it("powershell: blank destination key becomes YOUR_API_KEY (quoted)", () => {
+  it("powershell: blank destination key is a literal YOUR_API_KEY placeholder", () => {
     const cmd = buildFriendlyCommand({ ...baseState, apiKey: "  " }, "windows", "windows-powershell");
-    expect(cmd).toContain(`--api-key="${API_KEY_PLACEHOLDER}"`);
+    expect(cmd).toContain(`--api-key='${API_KEY_PLACEHOLDER}'`);
   });
 
   it("blank source key on a server-to-server migration becomes YOUR_SOURCE_API_KEY", () => {

@@ -8,7 +8,7 @@
 
 ![App Preview](screenshots/design-revision/after.jpg)
 
-**A friendly, no-command-line-needed way to import your photos into Immich.**
+**A visual way to prepare your immich-go import command.**
 
 [Launch the App](https://blickoneblickytwo.github.io/immich-go-desktop/) · [Report a Bug](https://github.com/blickoneblickytwo/immich-go-desktop/issues) · [Request a Feature](https://github.com/blickoneblickytwo/immich-go-desktop/issues)
 
@@ -51,20 +51,16 @@ The **Settings** link below the card opens Privacy, Help (API key permissions, r
 
 ---
 
-## Your data stays private
+## How connection details are handled
 
-**You don't even have to type your API key in.** Leave it blank and the generated command contains `YOUR_API_KEY` for you to fill in yourself, in your own terminal - your key never touches this page at all.
+- **Keys are optional.** Leave a key field blank and the command uses `YOUR_API_KEY` or `YOUR_SOURCE_API_KEY`, for you to replace outside this page.
+- **The browser tests only the destination.** Clicking Test connection sends that key to the entered destination’s `/api/server/about` endpoint. The request blocks redirects, omits browser cookies and referrer information, and times out after 10 seconds. Use HTTPS: HTTP does not encrypt the key. A successful response does not prove that every import permission is available, and the source server is not tested.
+- **Remember is optional.** With Remember selected, Continue or a successful test saves the destination URL and any destination key as plain text in this site’s browser storage. The app does not encrypt this storage; scripts on the same origin can read it. Migration source details and photo paths are not saved. Unchecking Remember or clearing the saved connection in Settings removes that stored record and turns Remember off; storage failures are reported. Already entered form values remain in page memory until reset or reload.
+- **Exports include entered keys.** Copy command and Download as script include any keys you entered, even if the preview masks them. Clipboard history, script files, shell history, and running-process information can retain or expose those keys. Do not share them; use placeholders if you prefer to insert keys outside this page.
+- **Page loading still uses the network.** This version has no analytics or application backend receiving form details. The host serves the page, JavaScript, stylesheet, and bundled image and may log ordinary request metadata. See [GitHub’s privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). External help links open third-party sites. The connection test is an additional, optional request.
+- **The page does not read or upload your photos.** It builds text commands. immich-go performs the import separately on your computer. A test-run command skips photo uploads but still connects to your server.
 
-If you do enter it, **it never leaves your browser** except for one thing: if you click **Test connection**, it's sent straight to the server URL *you* typed in - nowhere else. Skip the test and it isn't sent anywhere at all; it only ever ends up in the command text on your screen.
-
-A few more specifics:
-
-- **No backend.** This is a static page. There's no server behind it, no analytics, no logging - nobody sees what you type, including me.
-- **Local storage only if you ask for it.** Ticking "Remember on this device" saves your server URL (and key, if you entered one) in your browser's local storage, on your machine. Nothing is uploaded.
-- **Don't take my word for it.** The source code is available to inspect - read exactly what it does, or open your browser's dev tools, go to the Network tab, and watch while you use it. You'll see nothing go out except that one optional test.
-- **Want zero trust required?** [Run it locally](#run-it-locally-optional) - same code, on your own machine.
-
-The in-app **Settings → Privacy** tab has the same information for quick reference.
+Inspect the source and your browser’s Network panel to check this version’s behavior, or [run it locally](#run-it-locally-optional). Local operation avoids loading the app from GitHub; connection tests and terminal imports still contact the server you specify. See [the privacy review](PRIVACY.md) for scope, safeguards, and remaining limits.
 
 ---
 
@@ -90,10 +86,10 @@ The Tailwind CSS 4 build targets modern browsers: Safari 16.4+, Chrome 111+, and
 ## FAQ
 
 **What API key permissions do I need?**
-Easiest: grant your key all permissions when you create it in Immich. If you'd rather scope it down, immich-go's actual minimal set is `asset.read`, `asset.statistics`, `asset.update`, `asset.upload`, `asset.copy`, `asset.delete`, `asset.download`, `album.create`, `album.read`, `albumAsset.create`, `server.about`, `stack.create`, `tag.asset`, `tag.create`, `user.read`. Add `job.create` and `job.read` (on an admin-linked key) only if you want Immich's background jobs paused during upload. See [immich-go discussion #1032](https://github.com/simulot/immich-go/discussions/1032) for the source. This list is also copyable from the in-app **Settings → Help** tab.
+Use a scoped key and review the permissions for your immich-go version, source, and selected options. The baseline import set shown in **Settings → Help** is `asset.read`, `asset.statistics`, `asset.update`, `asset.upload`, `asset.copy`, `asset.delete`, `asset.download`, `album.create`, `album.read`, `albumAsset.create`, `server.about`, `stack.create`, `tag.asset`, `tag.create`, `user.read`. See [the upstream permission discussion](https://github.com/simulot/immich-go/discussions/1032). Add job permissions on an admin-linked key only if you choose to pause background jobs; generated commands set `--pause-immich-jobs=false`. The browser test checks the server-info endpoint, not the full permission set.
 
 **What does "WARNING: N assets did not reach a final state" mean?**
-Usually harmless. It commonly shows up with Google Takeout exports split across multiple zip files, where immich-go's internal bookkeeping counts an asset as "pending" even though it uploaded fine. Check your Immich library first - if your photos are there, you're done. Only dig further if photos are genuinely missing.
+Check the final immich-go summary, your library, and its log for missing assets before treating the import as complete. That warning is not proof of either success or failure.
 
 ---
 
