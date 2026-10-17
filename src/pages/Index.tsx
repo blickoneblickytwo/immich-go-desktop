@@ -132,6 +132,9 @@ const Index = () => {
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
+  const [scriptMessage, setScriptMessage] = useState("");
+  const [scriptDownloaded, setScriptDownloaded] = useState(false);
+  const scriptRequest = useRef({ active: true, request: 0 });
   const [storageMessage, setStorageMessage] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -149,6 +152,12 @@ const Index = () => {
   const detectedOs = useMemo(() => detectOS(), []);
   const os = platformOverride === "auto" ? detectedOs : platformOverride;
   const selectedShell: CommandShell = os === "windows" ? windowsShell : "unix";
+  useEffect(() => {
+    const context = { active: true, request: 0 };
+    scriptRequest.current = context;
+    setScriptMessage(""); setScriptDownloaded(false);
+    return () => { context.active = false; };
+  }, [state, os, step, reviewingLog]);
 
   const update = useCallback((partial: Partial<FriendlyState>) => {
     setState((prev) => ({ ...prev, ...partial }));
@@ -198,6 +207,13 @@ const Index = () => {
       return { command: "", maskedCommand: "", commandError: error instanceof Error ? error.message : "Check your command inputs." };
     }
   }, [state, os, selectedShell]);
+  const guidedError = useMemo(() => {
+    try {
+      // The guided download omits form keys and always uses PowerShell on Windows.
+      buildFriendlyCommand({ ...state, apiKey: "", fromApiKey: "" }, os, os === "windows" ? "windows-powershell" : "unix");
+      return "";
+    } catch (error) { return error instanceof Error ? error.message : "Check your import settings."; }
+  }, [state, os]);
   const checklist = useMemo(() => getCommandChecklist(state, os), [state, os]);
   const isDryRun = isTestRun(state);
   const missingDestKey = !state.apiKey.trim();
@@ -374,16 +390,27 @@ const Index = () => {
   };
 
   const handleDownloadScript = () => {
-    if (commandError) return;
-    const ext = selectedShell === "windows-cmd" ? "cmd" : selectedShell === "windows-powershell" ? "ps1" : "sh";
-    const blob = new Blob([`${command}\n`], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `immich-go-upload.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(a.href);
+    if (guidedError) return;
+    const context = scriptRequest.current;
+    const request = ++context.request;
+    setScriptMessage("Preparing your guided script…");
+    import("@/lib/guided-script").then(({ buildGuidedScript }) => {
+      if (!context.active || request !== context.request) return;
+      const script = buildGuidedScript(state, os);
+      const blob = new Blob([script.content], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = script.filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setScriptMessage(`Downloaded ${script.filename}. Follow the instructions below to run it.`);
+      setScriptDownloaded(true);
+    }).catch(() => {
+      if (context.active && request === context.request) setScriptMessage("The script could not be prepared. Check your settings and try again.");
+    });
   };
 
   const selectSource = (source: UploadSource) => {
@@ -532,7 +559,7 @@ const Index = () => {
                     autoComplete="off"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Leave blank for a <code className="font-mono">{SOURCE_API_KEY_PLACEHOLDER}</code> placeholder.
+                    The guided script asks for this key when run. Manual commands use <code className="font-mono">{SOURCE_API_KEY_PLACEHOLDER}</code> if blank.
                   </p>
                   {fromApiKeyError && <p className="text-xs text-destructive">{fromApiKeyError}</p>}
                 </div>
@@ -572,7 +599,7 @@ const Index = () => {
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                Leave blank to add your key to the command yourself.
+                The guided script asks for your key when run. Enter it here only for a browser test or manual command.
               </p>
               <details className="quiet-details">
                 <summary>API key help</summary>
@@ -843,7 +870,7 @@ const Index = () => {
                 </div>
 
                 <AdvancedSettings source={state.source} value={state.advanced} onChange={advanced => update({ advanced })} />
-                {commandError && <p role="alert" className="text-xs text-destructive">{commandError}</p>}
+                {guidedError && <p role="alert" className="text-xs text-destructive">{guidedError}</p>}
                 <button
                   type="button"
                   className="text-xs text-muted-foreground underline underline-offset-2"
@@ -873,9 +900,9 @@ const Index = () => {
               </Button>
               <Button
                 onClick={() => setStep(4)}
-                disabled={(sourceUsesPath(state.source) && !state.inputPath.trim()) || !state.preset || Boolean(commandError)}
+                disabled={(sourceUsesPath(state.source) && !state.inputPath.trim()) || !state.preset || Boolean(guidedError)}
               >
-                Generate command
+                Prepare import
                 <ArrowRight aria-hidden="true" />
               </Button>
             </div>
@@ -885,12 +912,31 @@ const Index = () => {
         {step === 4 && (
           <m.div key="step-4" {...stepMotionProps} className="space-y-5">
             <div className="space-y-1">
-              <h1 className="step-heading">Your command is ready.</h1>
+              <h1 className="step-heading">Ready for your test run.</h1>
               <p className="text-sm text-muted-foreground">
-                Copy this command and run it in your terminal.
+                Download a guided script. It sets up immich-go, asks for your keys, and tests before offering to upload.
               </p>
             </div>
 
+            <Button size="lg" className="w-full" onClick={handleDownloadScript} disabled={Boolean(guidedError)}>Download guided script</Button>
+            {guidedError && <p role="alert" className="text-sm text-destructive">{guidedError}</p>}
+            <p className="text-xs text-muted-foreground">No separate immich-go installation needed. API keys entered here are left out of this download.</p>
+            {scriptMessage && <p className="text-xs text-muted-foreground" role="status">{scriptMessage}</p>}
+            <details className="quiet-details" open={scriptDownloaded || undefined}>
+              <summary>How to run the download</summary>
+              <div className="details-content space-y-2 text-sm text-muted-foreground">
+                <p>Save it in Downloads on the computer with your photos. Open {os === "windows" ? "PowerShell" : "Terminal"}, then run:</p>
+                <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code>{os === "windows" ? '& "$HOME\\Downloads\\go-desktop-import.ps1"' : 'bash "$HOME/Downloads/go-desktop-import.sh"'}</code></pre>
+                <p>Review the script before running. It checks your photo path and server, then runs a test. Type <strong>UPLOAD</strong> only when you are ready to upload using these settings. Enter stops after the test.</p>
+                <p>Logs are saved in your user profile; the script prints their exact folder. They can contain private details.</p>
+                {os === "windows" && <p>If Windows blocks the downloaded script, follow your device’s script policy or ask its administrator. This app does not change execution policies.</p>}
+              </div>
+            </details>
+
+            <details className="quiet-details">
+              <summary>Manual command</summary>
+              <div className="details-content space-y-4">
+            <p className="text-xs text-muted-foreground">For an existing immich-go installation. This command runs the selected mode directly; it does not include guided setup or prompts.</p>
             <div className={cn(
               "import-status text-sm",
               isDryRun
@@ -956,15 +1002,12 @@ const Index = () => {
                 {copied ? <CheckCircle2 className="h-4 w-4" /> : null}
                 {copied ? "Copied" : "Copy command"}
               </Button>
-              <Button variant="link" onClick={handleDownloadScript} disabled={Boolean(commandError)}>
-                Download as script
-              </Button>
               {Boolean(state.apiKey.trim() || (state.source === "immich" && state.fromApiKey.trim())) && <Button variant="ghost" onClick={() => setShowKey((v) => !v)}>
                 {showKey ? "Hide key" : "Reveal key"}
               </Button>}
             </div>
 
-            <p className="text-xs text-muted-foreground">Copied commands and downloaded scripts include any keys you entered, even when the preview hides them. Keep them private.</p>
+            <p className="text-xs text-muted-foreground">Copied manual commands include any keys entered, even when the preview hides them. Keep them private. The guided download asks for keys when run.</p>
             {copyError && <p role="status" className="text-xs text-destructive">{copyError}</p>}
 
             <details className="quiet-details">
@@ -974,6 +1017,8 @@ const Index = () => {
                   <li key={line}>• {line}</li>
                 ))}
               </ul>
+            </details>
+              </div>
             </details>
 
             <details className="quiet-details">
@@ -995,15 +1040,14 @@ const Index = () => {
               <Link to="/?view=import-report" className="review-log-link">Review an import log</Link>
             </details>
 
-            <div className="text-sm text-muted-foreground">
-              Don&apos;t have immich-go installed?{" "}
+            <div className="text-xs text-muted-foreground">
               <a
                 href="https://github.com/simulot/immich-go"
                 target="_blank"
                 rel="noreferrer"
                 className="underline underline-offset-2 text-foreground/70 hover:text-foreground"
               >
-                How to install (takes ~2 minutes)
+                Manual immich-go installation guide
               </a>
             </div>
 
@@ -1026,15 +1070,15 @@ const Index = () => {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Switch to live upload?</AlertDialogTitle>
+              <AlertDialogTitle>Use these upload settings?</AlertDialogTitle>
               <AlertDialogDescription>
-                This turns off the test run. The generated command will upload real files to your
-                server when you run it.
+                The guided download will still test first and ask before uploading. The manual
+                command will upload real files to your server when run.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep test run</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmLiveAction}>Switch to live</AlertDialogAction>
+              <AlertDialogAction onClick={confirmLiveAction}>Use upload settings</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

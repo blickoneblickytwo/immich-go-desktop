@@ -110,15 +110,15 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange, o
           <TabsContent value="privacy" className="settings-panel">
             <section className="settings-section">
               <h3>Keys and commands</h3>
-              <p>Leave the destination key blank to add <code>{API_KEY_PLACEHOLDER}</code> yourself after copying the command.</p>
+              <p>The guided download asks for keys with hidden input when it runs. Keys entered here are not embedded in that download. A copied manual command uses <code>{API_KEY_PLACEHOLDER}</code> when its destination key is blank.</p>
               <p>The connection test sends the destination key to the server address you enter. Redirects are blocked; the source server is not tested. HTTPS encrypts the connection; HTTP does not.</p>
-              <p>Copied commands and downloaded scripts contain any entered keys, even when the preview hides them. Your clipboard, saved scripts, and shell history may retain them.</p>
+              <p>Copied manual commands contain entered keys even when the preview hides them. The guided script passes runtime keys to immich-go; process information and CLI logs may expose them. Keep logs private.</p>
             </section>
             <SavedConnection onCleared={onForgetSavedConnection} />
             <section className="settings-section">
               <h3>This page and its host</h3>
               <p>This version has no analytics or app backend receiving form details. The host serves the page and its assets and may log request metadata. External help links open third-party sites.</p>
-              <p>The app does not scan your photo library or upload photos. Run the generated command separately through immich-go to import them.</p>
+              <p>This web page does not scan your photo library or upload photos. Running a downloaded script separately sets up immich-go if needed, checks files and servers, and runs a test. Uploading requires typing UPLOAD after that test.</p>
               <p>Log review reads only the log file you choose, in browser memory. The app does not upload or save log contents. Logs may contain credentials and private paths.</p>
               <ResourceLink href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub hosting privacy</ResourceLink>
               <ResourceLink href={REPOSITORY + "#run-it-locally-optional"}>Run the app locally</ResourceLink>
@@ -127,7 +127,7 @@ export default function SettingsDialog({ open, onOpenChange, tab, onTabChange, o
           <TabsContent value="help" className="settings-panel">
             <section className="settings-section">
               <h3>Start with a test run</h3>
-              <p>A test run skips photo uploads but still makes server requests. When you are ready, choose a live upload and run the generated command in your terminal.</p>
+              <p>The guided download sets up immich-go v0.32.0 if needed and runs a test first. It asks for keys when run. Type UPLOAD after reviewing the test to begin uploading; Enter stops. A test skips photo uploads but still makes server requests.</p>
               <ResourceLink href="https://immich.app/docs/features/command-line-interface/#generate-the-api-key">Create an Immich API key</ResourceLink>
             </section>
             <details className="quiet-details settings-detail">

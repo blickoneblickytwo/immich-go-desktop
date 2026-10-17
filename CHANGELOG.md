@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Guided Bash/PowerShell downloads that use a compatible installed immich-go or a pinned, checksum-verified private copy; prompt for runtime keys; check paths and servers; run a test before exact UPLOAD consent; and retain logs with conservative reported-count summaries. API keys entered in the browser are omitted from guided downloads. Manual copy commands remain separate.
 - Optional Advanced controls under Custom for source-specific album settings, burst/HEIC stacking, time zone, session tagging, explicit concurrency, and request timeout. Beginner presets are unchanged; unsupported controls are excluded for each source.
 - Local text/JSON log review with explicit file selection, a synthetic sample, grouped warnings/errors, separate appended runs, unknown-count handling, and summary consistency notices. Processing runs in a cancellable worker, with a 25 MiB limit and bounded excerpts. No log upload or persistence; returning preserves the unfinished wizard in page memory.
 

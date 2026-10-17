@@ -4,11 +4,11 @@
 [![Open app](https://img.shields.io/badge/Open-App-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 [![immich-go v0.32.0 checked](https://img.shields.io/badge/immich--go-v0.32.0%20checked-blue)](IMMICH_GO_BASELINE.md)
 
-**Prepare an immich-go import command in four simple steps.** Bring a photo folder, Google Photos Takeout, Apple iCloud export, or another Immich library into your own Immich server.
+**Prepare a guided photo import in four simple steps.** Bring a photo folder, Google Photos Takeout, Apple iCloud export, or another Immich library into your own Immich server.
 
 [Open the app](https://blickoneblickytwo.github.io/immich-go-desktop/) · [Report a problem or suggest a feature](https://github.com/blickoneblickytwo/immich-go-desktop/issues) · [What's new](CHANGELOG.md)
 
-The app builds a command for you to run in a terminal. **It does not upload your photos or run immich-go itself.** Despite the project name, this is currently a browser app; a standalone desktop package is not included.
+The app builds a script for you to run in a terminal. It sets up immich-go if needed, asks for your keys, and runs a test before asking whether to upload. **The web page does not upload your photos or run the script itself.** A standalone desktop package is not included. Experienced users can still copy a manual command.
 
 > Screenshots show the revision in this repository. The hosted app may differ until that revision is deployed. All screenshots use example details; the log sample is synthetic.
 
@@ -18,9 +18,9 @@ Have these three things ready:
 
 - **Your Immich server address**, such as `https://photos.example.com`.
 - **Your photos or export**, accessible from the computer that will run the command. For a server-to-server move, have the source server address and its API key instead.
-- **immich-go v0.32.0**, installed on that computer. Follow the [official installation guide](https://github.com/simulot/immich-go/blob/v0.32.0/docs/installation.md), then run `immich-go version` to check it.
+- **Terminal or PowerShell** on that computer, with network access to your Immich server. The guided script sets up immich-go v0.32.0 if needed; no separate immich-go installation is required on supported macOS/Linux/Windows ARM64 or x86-64 computers. Setup needs internet access to GitHub unless a compatible installed copy or verified cached archive is available.
 
-A terminal is the command window on your computer: Terminal on macOS/Linux or PowerShell on Windows. Your Immich API key is needed when running the command, but you can leave it out of this page and add it yourself later. **Settings → Help** explains where to create a key and which permissions to review.
+A terminal is the command window on your computer: Terminal on macOS/Linux or PowerShell on Windows. The guided download asks for API keys with hidden input when it runs, so you can leave key fields blank in the web page. **Settings → Help** explains where to create a key and which permissions to review.
 
 ## Your first import, screen by screen
 
@@ -34,7 +34,7 @@ Open **choose source** and select a photo folder, Google Photos Takeout, Apple i
 
 ### 2. Enter your Immich server address
 
-Use your own server address. Paste your API key if you want, or leave it blank to add it to the command later. **Test connection** is optional; you can continue without it. Leave **Remember on this device** off if you do not want the destination details saved in this browser.
+Use your own server address. Leave the API key blank for the guided script, which asks for it later. You can enter a key here for the optional browser **Test connection** or a manual command. Leave **Remember on this device** off if you do not want destination details saved in this browser. Entered keys are not embedded in the guided download.
 
 <img src="screenshots/design-revision/process/02-connect.png" width="760" alt="Step 2: Enter the destination server address and optional API key. The example key is blank and Remember is off." />
 
@@ -44,19 +44,40 @@ For **Another Immich server**, this step also asks for the source server details
 
 Enter the full path to the folder or export **on the computer where immich-go will run**. This is a path field, not a photo upload. On macOS, dragging a folder into Terminal can help you find its path. For Takeout, use the path to your export ZIP files or extracted folder.
 
-Check the operating-system selector, keep **Test run** selected, then choose **Generate command**. The options vary with your source; you can leave **Custom** alone for your first attempt. Server-to-server moves do not need a local photo path.
+Check the operating-system selector, keep **Test run** selected, then choose **Prepare import**. The options vary with your source; you can leave **Custom** alone for your first attempt. Server-to-server moves do not need a local photo path.
 
-<img src="screenshots/design-revision/process/03-options.png" width="760" alt="Step 3: A sample photo path with Test run selected and the Generate command button." />
+<img src="screenshots/design-revision/process/03-options.png" width="760" alt="Step 3: A sample photo path with Test run selected and the Prepare import button." />
 
-### 4. Copy the command and run it
+### 4. Download your guided script and run it
 
-Choose **Copy command**, then paste it into your terminal on the computer with immich-go installed. If you left a key blank, replace `YOUR_API_KEY` with your real destination key before running it. Server-to-server moves may also need `YOUR_SOURCE_API_KEY` replaced. Replace example addresses and paths with your own.
+Choose **Download guided script**, save it in Downloads on the computer with your photos, then open Terminal or PowerShell. Review the script before running it. Expand **How to run the download** for the command to paste:
 
-<img src="screenshots/design-revision/process/04-command.png" width="760" alt="Step 4: The generated test-run command, a reminder to replace the placeholder key, and copy or download actions." />
+<img src="screenshots/design-revision/process/04-guided.png" width="760" alt="Step 4: Download guided script, runtime instructions, and a separate collapsed manual command." />
 
-You can also choose **Download as script**. Copy and download both include any keys you entered, even if the preview hides them. Keep the command and script private.
+macOS/Linux:
 
-**After the test:** read the terminal output and check for errors. When you are ready to upload, use **Back** to choose an upload preset and generate a new command. The test command will keep acting as a test if you run it again. Keep your original photos and export files while you check the result in Immich.
+```bash
+bash "$HOME/Downloads/go-desktop-import.sh"
+```
+
+Windows PowerShell:
+
+```powershell
+& "$HOME\Downloads\go-desktop-import.ps1"
+```
+
+Adjust the path if you saved the script elsewhere. Windows script policies may block the download; follow your device's policy or ask its administrator. The script does not change those policies. Supported platforms need their standard tools; see [requirements and behavior](docs/guided-import.md).
+
+The script checks the photo path, uses a compatible installed immich-go or downloads and checksum-verifies its own copy, then asks for your destination key (and source key for migration). It checks each server's version response and runs a test. HTTP addresses need explicit acknowledgement before sending a key.
+
+**After the test:** review the output and warnings. Type **UPLOAD** only when ready to upload using these settings, or press Enter to stop after the test. A failed, incomplete, empty, or problematic test stops before this prompt. Every invocation tests first, including a download generated from a live preset. The script prints reported counts and the exact saved log folder; check your library and keep your original photos/export files while reviewing results.
+
+<details>
+<summary>Already have immich-go installed? Use a manual command</summary>
+
+Open **Manual command**, then **Copy command**. Replace `YOUR_API_KEY` and, where applicable, `YOUR_SOURCE_API_KEY` if you left them blank. The copied command contains any entered keys and runs its selected mode directly; it does not include guided setup, key prompts, or a test-to-upload confirmation. Keep it private. See the [official installation guide](https://github.com/simulot/immich-go/blob/v0.32.0/docs/installation.md) if using this route.
+
+</details>
 
 ## Optional: more control with Advanced
 
@@ -109,8 +130,8 @@ Recognition is based on immich-go v0.32.0. Other formats may be only partially u
 
 - **Connection testing sends your destination key to the address you enter.** Use HTTPS. The test blocks redirects and does not verify all import permissions; an unreachable browser test does not necessarily mean immich-go cannot reach your server.
 - **Remember is optional and unencrypted.** Continue or a successful test saves the destination address and any destination key as plain text in this site's browser storage when Remember is on. Scripts on the same origin can read it. Source-server details and photo paths are not saved.
-- **Copied commands and scripts contain entered keys.** Clipboard history, saved files, shell history, and process information may retain them. Using placeholders lets you add keys outside this page.
-- **The host serves the app and may log request metadata.** This version has no analytics or application backend receiving form details. External help links open third-party sites. The app does not scan your photo library or upload photos; the optional reader reads only the file you choose.
+- **Copied manual commands contain entered keys.** The guided script leaves them out and asks with hidden input when it runs. Runtime keys are still passed to immich-go and can be exposed through process information or CLI logs. Scripts also contain your chosen addresses and paths; keep scripts and logs private.
+- **The host serves the web page and may log request metadata.** This version has no analytics or application backend receiving form details. External help links open third-party sites. The browser does not scan your photo library or upload photos; the optional reader reads only the file you choose. A downloaded script runs separately, checks paths, contacts GitHub when setup is needed, and uses immich-go to contact your servers and read/import photos.
 
 See [PRIVACY.md](PRIVACY.md) for the complete data flow and limits, including clearing saved details, browser extensions, and log processing. You can also [run the app locally](#run-it-locally-optional).
 
@@ -148,7 +169,7 @@ npm run build
 
 **Do I still need immich-go?**
 
-Yes. This page prepares the command; immich-go runs it separately in your terminal.
+The import still uses immich-go, but the guided script sets up the pinned version if needed. Manual commands require your own compatible installation.
 
 **Where should I put my photos?**
 
@@ -160,7 +181,7 @@ Review **Settings → Help** and the [upstream permission discussion](https://gi
 
 **What if the browser connection test fails?**
 
-Double-check the address, HTTPS setup, key, and browser access. You can continue without the test and run the generated test command from the computer that can reach your server. Do not treat the browser result alone as proof of import compatibility.
+Double-check the address, HTTPS setup, key, and browser access. You can continue without the browser test. The guided script separately checks both configured servers from the import computer before its test run. Neither server-info check verifies every import permission.
 
 **What does “assets did not reach a final state” mean?**
 
