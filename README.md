@@ -1,131 +1,176 @@
-# immich-go-desktop
+# Go Desktop · immich-go-desktop
 
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-yellow.svg)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
-[![GitHub Stars](https://img.shields.io/github/stars/blickoneblickytwo/immich-go-desktop?style=flat)](https://github.com/blickoneblickytwo/immich-go-desktop/stargazers)
-[![immich-go v0.32.0](https://img.shields.io/badge/immich--go-v0.32.0-blue)](https://github.com/simulot/immich-go)
-[![Immich v3.3.0 API checked](https://img.shields.io/badge/Immich-v3.3.0%20API%20checked-4F46E5)](https://github.com/immich-app/immich/releases/tag/v3.3.0)
+[![Open app](https://img.shields.io/badge/Open-App-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
+[![immich-go v0.32.0 checked](https://img.shields.io/badge/immich--go-v0.32.0%20checked-blue)](IMMICH_GO_BASELINE.md)
 
-![App Preview](screenshots/design-revision/after.jpg)
+**Prepare an immich-go import command in four simple steps.** Bring a photo folder, Google Photos Takeout, Apple iCloud export, or another Immich library into your own Immich server.
 
-**A visual way to prepare your immich-go import command.**
+[Open the app](https://blickoneblickytwo.github.io/immich-go-desktop/) · [Report a problem or suggest a feature](https://github.com/blickoneblickytwo/immich-go-desktop/issues) · [What's new](CHANGELOG.md)
 
-[Launch the App](https://blickoneblickytwo.github.io/immich-go-desktop/) · [Report a Bug](https://github.com/blickoneblickytwo/immich-go-desktop/issues) · [Request a Feature](https://github.com/blickoneblickytwo/immich-go-desktop/issues)
+The app builds a command for you to run in a terminal. **It does not upload your photos or run immich-go itself.** Despite the project name, this is currently a browser app; a standalone desktop package is not included.
 
----
+> Screenshots show the revision in this repository. The hosted app may differ until that revision is deployed. All screenshots use example details; the log sample is synthetic.
 
-## Who is this for?
+## Before you start
 
-If you've ever opened a terminal to run an immich-go command and immediately felt lost - this is for you.
+Have these three things ready:
 
-I built this while migrating my own photo library. The tool that does the actual importing (immich-go) is great, but figuring out the right command to run is a real barrier if you're not a developer. One wrong flag or a typo in your server URL and things go sideways fast.
+- **Your Immich server address**, such as `https://photos.example.com`.
+- **Your photos or export**, accessible from the computer that will run the command. For a server-to-server move, have the source server address and its API key instead.
+- **immich-go v0.32.0**, installed on that computer. Follow the [official installation guide](https://github.com/simulot/immich-go/blob/v0.32.0/docs/installation.md), then run `immich-go version` to check it.
 
-This app removes all of that. You click through a few steps, it builds the command for you, and you paste it into your terminal and run it. That's it.
+A terminal is the command window on your computer: Terminal on macOS/Linux or PowerShell on Windows. Your Immich API key is needed when running the command, but you can leave it out of this page and add it yourself later. **Settings → Help** explains where to create a key and which permissions to review.
 
----
+## Your first import, screen by screen
 
-## How it works
+Start with **Test run**. It skips photo uploads but still contacts your server when you run it.
 
-1. Open the [live app](https://blickoneblickytwo.github.io/immich-go-desktop/) - nothing to install
-2. Pick what you're importing (a folder, a Google Takeout, an iCloud export, or another Immich server)
-3. Enter your Immich server URL - your API key is **optional** (there's a test button, or skip it and fill your key in later, in your own terminal)
-4. Point it to your photos and choose how to handle them
-5. Copy the generated command and paste it into your terminal
+### 1. Choose where your photos are coming from
 
----
+Open **choose source** and select a photo folder, Google Photos Takeout, Apple iCloud export, or another Immich server. Press the arrow to continue.
 
-## What it does and doesn't do
+<img src="screenshots/design-revision/process/01-source.png" width="760" alt="Step 1: Choose the source of your photos, then continue with the arrow." />
 
-This app **generates the command** for you. The actual importing is still done by immich-go running in your terminal - this just means you never have to write the command yourself.
+### 2. Enter your Immich server address
 
-It supports the main immich-go import sources:
+Use your own server address. Paste your API key if you want, or leave it blank to add it to the command later. **Test connection** is optional; you can continue without it. Leave **Remember on this device** off if you do not want the destination details saved in this browser.
 
-- 📁 **A folder** on your computer
-- 📦 **A Google Photos Takeout** (zip or extracted folder, with wildcard support)
-- 🍎 **An Apple iCloud export**
-- 🔁 **Another Immich server** — server-to-server migration
+<img src="screenshots/design-revision/process/02-connect.png" width="760" alt="Step 2: Enter the destination server address and optional API key. The example key is blank and Remember is off." />
 
-You'll need immich-go installed to run it. If you haven't installed it yet, follow the [immich-go installation guide](https://github.com/simulot/immich-go). This app targets **immich-go v0.32.0**. On October 8, 2026, its generated flags were checked against the upstream command documentation and its optional connection-test endpoint was checked against the **Immich v3.3.0** OpenAPI specification. No integration changes were indicated by those checks; a live photo import against v3.3.0 has not been tested. See [the verification baseline](IMMICH_GO_BASELINE.md) for the evidence and remaining binary-verification work.
+For **Another Immich server**, this step also asks for the source server details. The browser connection test checks only the destination.
 
-The **Settings** link below the card opens Privacy, Help (API key permissions, reading immich-go's output), and About tabs.
+### 3. Add your photo path and choose Test run
 
-### Optional Advanced controls
+Enter the full path to the folder or export **on the computer where immich-go will run**. This is a path field, not a photo upload. On macOS, dragging a folder into Terminal can help you find its path. For Takeout, use the path to your export ZIP files or extracted folder.
 
-In step 3, choose **Custom → Advanced** for destination/source album options, burst and HEIC/JPEG stacking, a time-zone override, session tagging, concurrency, and request timeout. Only supported controls appear for each source. Advanced starts collapsed; unchanged defaults add no flags, and its overrides apply only to Custom.
+Check the operating-system selector, keep **Test run** selected, then choose **Generate command**. The options vary with your source; you can leave **Custom** alone for your first attempt. Server-to-server moves do not need a local photo path.
 
-Custom speed settings now affect concurrency: Slow uses 2 tasks, Fast uses 8, and Balanced leaves the choice to immich-go. An explicit concurrency value in Advanced takes precedence. Beginner presets keep their existing commands.
+<img src="screenshots/design-revision/process/03-options.png" width="760" alt="Step 3: A sample photo path with Test run selected and the Generate command button." />
 
-### Review an import log
+### 4. Copy the command and run it
 
-After running immich-go separately, open **After you run it → Review an import log**, or **Settings → Help → Reading import results**. Select an existing UTF-8 text or JSON-lines log, up to 25 MiB, or try the clearly labelled synthetic sample.
+Choose **Copy command**, then paste it into your terminal on the computer with immich-go installed. If you left a key blank, replace `YOUR_API_KEY` with your real destination key before running it. Server-to-server moves may also need `YOUR_SOURCE_API_KEY` replaced. Replace example addresses and paths with your own.
 
-The reader shows recognised summary counts and grouped warnings/errors. Missing counts stay unknown, appended runs are reviewed separately, and errors outside the asset summary remain visible. This is an interpretation of the log, not verification of your library or a guarantee that every photo imported. Recognition is checked against immich-go v0.32.0; other formats may be only partially understood. See [the log format contract](docs/log-format-contract.md).
+<img src="screenshots/design-revision/process/04-command.png" width="760" alt="Step 4: The generated test-run command, a reminder to replace the placeholder key, and copy or download actions." />
 
-Log contents are processed in a browser worker without being uploaded or saved by the app. Source excerpts can contain private information and remain collapsed. Clear log, return to the import wizard, or reload to discard the report from the view. Your original file stays unchanged. An unfinished wizard is preserved in page memory when you open the reader and return; reloading does not preserve that wizard state.
+You can also choose **Download as script**. Copy and download both include any keys you entered, even if the preview hides them. Keep the command and script private.
 
----
+**After the test:** read the terminal output and check for errors. When you are ready to upload, use **Back** to choose an upload preset and generate a new command. The test command will keep acting as a test if you run it again. Keep your original photos and export files while you check the result in Immich.
 
-## How connection details are handled
+## Optional: more control with Advanced
 
-- **Keys are optional.** Leave a key field blank and the command uses `YOUR_API_KEY` or `YOUR_SOURCE_API_KEY`, for you to replace outside this page.
-- **The browser tests only the destination.** Clicking Test connection sends that key to the entered destination’s `/api/server/about` endpoint. The request blocks redirects, omits browser cookies and referrer information, and times out after 10 seconds. Use HTTPS: HTTP does not encrypt the key. A successful response does not prove that every import permission is available, and the source server is not tested.
-- **Remember is optional.** With Remember selected, Continue or a successful test saves the destination URL and any destination key as plain text in this site’s browser storage. The app does not encrypt this storage; scripts on the same origin can read it. Migration source details and photo paths are not saved. Unchecking Remember or clearing the saved connection in Settings removes that stored record and turns Remember off; storage failures are reported. Already entered form values remain in page memory until reset or reload.
-- **Exports include entered keys.** Copy command and Download as script include any keys you entered, even if the preview masks them. Clipboard history, script files, shell history, and running-process information can retain or expose those keys. Do not share them; use placeholders if you prefer to insert keys outside this page.
-- **Page loading still uses the network.** This version has no analytics or application backend receiving form details. The host serves the page, JavaScript, stylesheet, and bundled image and may log ordinary request metadata. See [GitHub’s privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). External help links open third-party sites. The connection test is an additional, optional request.
-- **The app does not scan your photo library or upload photos.** The command builder produces text; the optional log reader reads only the file you select. immich-go performs the import separately on your computer. A test-run command skips photo uploads but still connects to your server.
-- **Log review reads the file you explicitly choose.** Contents and the resulting report stay in page/worker memory, with no log upload or new browser persistence. Loading this optional view fetches its app code and worker from the host. Browser extensions and other same-origin scripts remain separate trust boundaries.
+In step 3, choose **Custom**, then open **Advanced**. It starts collapsed and adds no required step.
 
-Inspect the source and your browser’s Network panel to check this version’s behavior, or [run it locally](#run-it-locally-optional). Local operation avoids loading the app from GitHub; connection tests and terminal imports still contact the server you specify. See [the privacy review](PRIVACY.md) for scope, safeguards, and remaining limits.
+- Choose a destination album for folder imports, or filter a Takeout import to one named source album.
+- Group burst or matching HEIC/JPEG photos into stacks for folder and Takeout imports. The exposed stacking choices keep both versions.
+- Set a time-zone override, add a session tag, or adjust concurrency and request timeout.
 
----
+**Slow** uses 2 concurrent tasks, **Fast** uses 8, and **Balanced** lets immich-go choose. An explicit **Concurrent tasks** value overrides the speed setting. Advanced overrides apply only while Custom is selected; **Reset Advanced** clears them. This is a selected set of CLI options, not every option immich-go supports.
+
+For server-to-server moves, the timeout controls destination requests. The source server has a separate timeout that this UI does not expose.
+
+<details>
+<summary>See the Advanced screen</summary>
+
+<img src="screenshots/design-revision/new-features/advanced-desktop.png" width="760" alt="Expanded Advanced controls for a Takeout import, including album filtering, stacking, time zone, session tagging, concurrency, and timeout." />
+
+</details>
+
+## Optional: understand an import log
+
+After running immich-go, open **After you run it → Review an import log**, or **Settings → Help → Reading import results → Review an import log**. Choose an existing UTF-8 text or JSON-lines log, up to 25 MiB. **Try a sample log** lets you explore using clearly labelled example data.
+
+The reader shows reported uploads, skipped/discarded assets, asset errors, and pending assets, plus grouped warnings and errors. Missing counts stay **Unknown**. It flags partial logs and conflicting summaries, and keeps appended runs separate. **These are reported counts, not a check that your Immich library is complete.**
+
+<details>
+<summary>See log selection and a sample report</summary>
+
+<img src="screenshots/design-revision/new-features/log-review-start.png" width="760" alt="Log review starting screen with Choose log file and Try a sample log." />
+
+<img src="screenshots/design-revision/new-features/log-review-report.png" width="760" alt="Synthetic sample report showing counts and a warning about an error outside the zero-error asset summary." />
+
+</details>
+
+Log contents are processed in browser memory and are not uploaded or saved by the app. Logs can contain credentials and private paths; source excerpts start collapsed. **Clear log**, return to the wizard, or reload to discard the report from the view. The original file is unchanged. Returning to the wizard keeps your unfinished form in page memory; a reload does not preserve that form.
+
+Recognition is based on immich-go v0.32.0. Other formats may be only partially understood. See the [log format contract](docs/log-format-contract.md).
+
+## Settings and privacy
+
+**Settings** is below the main card. **Privacy** explains data handling and lets you clear a saved connection. **Help** covers API keys and import results. **About** includes version and licensing information.
+
+<details>
+<summary>See Settings</summary>
+
+<img src="screenshots/design-revision/settings-after.png" width="760" alt="Settings with Privacy, Help, and About tabs, key-handling explanations, and saved-connection status." />
+
+</details>
+
+- **Connection testing sends your destination key to the address you enter.** Use HTTPS. The test blocks redirects and does not verify all import permissions; an unreachable browser test does not necessarily mean immich-go cannot reach your server.
+- **Remember is optional and unencrypted.** Continue or a successful test saves the destination address and any destination key as plain text in this site's browser storage when Remember is on. Scripts on the same origin can read it. Source-server details and photo paths are not saved.
+- **Copied commands and scripts contain entered keys.** Clipboard history, saved files, shell history, and process information may retain them. Using placeholders lets you add keys outside this page.
+- **The host serves the app and may log request metadata.** This version has no analytics or application backend receiving form details. External help links open third-party sites. The app does not scan your photo library or upload photos; the optional reader reads only the file you choose.
+
+See [PRIVACY.md](PRIVACY.md) for the complete data flow and limits, including clearing saved details, browser extensions, and log processing. You can also [run the app locally](#run-it-locally-optional).
+
+## Compatibility
+
+The latest official immich-go release was **v0.32.0** when checked on **October 17, 2026**. All exposed Advanced flags were checked against the checksum-verified official macOS ARM64 binary and tagged source. The four source commands' sanitized help captures and 18 help-only flag-parsing checks are recorded in [the verification baseline](IMMICH_GO_BASELINE.md).
+
+Those checks confirm flag registration and parsing; **a real photo import and native Windows execution have not been tested**. The optional connection-test endpoint was separately checked against the Immich v3.3.0 API specification on October 8, 2026. That is an API-specification check, not a full integration guarantee.
 
 ## Run it locally (optional)
 
-You don't need to install anything to use the app - just open the link above. But if you want to run it offline:
+Use **Node.js 24 LTS** and npm. To work on this repository:
 
 ```bash
 git clone https://github.com/blickoneblickytwo/immich-go-desktop.git
 cd immich-go-desktop
-npm install
+npm ci
 npm run dev
 ```
 
-It's a frontend-only app built with Vite + React.
+Open `http://127.0.0.1:8080/`. The server listens on this computer only by default. Cloning uses the repository's default branch; select the revision you want before installing dependencies if you are reviewing an unreleased change.
 
-Use **Node.js 24 LTS** for local development. The development server listens on `127.0.0.1` by default.
+Local operation avoids loading the app from GitHub Pages. Installing dependencies needs internet access; connection tests and terminal imports still contact your chosen server.
 
-The Tailwind CSS 4 build targets modern browsers: Safari 16.4+, Chrome 111+, and Firefox 128+.
+This is a Vite + React frontend. Its Tailwind CSS 4 build targets Safari 16.4+, Chrome 111+, and Firefox 128+. For development checks:
 
----
+```bash
+npm test
+npm run lint
+npx tsc --noEmit -p tsconfig.app.json
+npm run build
+```
 
-## FAQ
+## Common questions
 
-**What API key permissions do I need?**
-Use a scoped key and review the permissions for your immich-go version, source, and selected options. The baseline import set shown in **Settings → Help** is `asset.read`, `asset.statistics`, `asset.update`, `asset.upload`, `asset.copy`, `asset.delete`, `asset.download`, `album.create`, `album.read`, `albumAsset.create`, `server.about`, `stack.create`, `tag.asset`, `tag.create`, `user.read`. See [the upstream permission discussion](https://github.com/simulot/immich-go/discussions/1032). Add job permissions on an admin-linked key only if you choose to pause background jobs; generated commands set `--pause-immich-jobs=false`. The browser test checks the server-info endpoint, not the full permission set.
+**Do I still need immich-go?**
 
-**What does "WARNING: N assets did not reach a final state" mean?**
-Check the final immich-go summary, your library, and its log for missing assets before treating the import as complete. That warning is not proof of either success or failure.
+Yes. This page prepares the command; immich-go runs it separately in your terminal.
 
----
+**Where should I put my photos?**
 
-## Recent Updates
+Somewhere accessible to the computer running immich-go. The path you type must make sense on that computer, even if you opened this page on a different device. For Google Takeout, see the [upstream Takeout guide](https://github.com/simulot/immich-go/blob/v0.32.0/docs/commands/upload.md#from-google-photos).
 
-Curious about the latest improvements (like the fully optional API key, the new Settings dialog, and a connection test that never blocks you)? Check out the [Changelog](CHANGELOG.md) for a full list of recent changes.
+**Which API key permissions do I need?**
 
----
+Review **Settings → Help** and the [upstream permission discussion](https://github.com/simulot/immich-go/discussions/1032) for your version and selected options. Generated commands set `--pause-immich-jobs=false`. The browser connection test checks only server information, not the full import permission set. Avoid sharing API keys in issues or screenshots.
 
-## Want to help?
+**What if the browser connection test fails?**
 
-This is a source-available project and contributions are welcome! A few areas where help would be especially appreciated:
+Double-check the address, HTTPS setup, key, and browser access. You can continue without the test and run the generated test command from the computer that can reach your server. Do not treat the browser result alone as proof of import compatibility.
 
-- **Standalone desktop app** - wrapping this into a proper Mac/Windows/Linux app (Electron, Tauri, or similar) so users don't need to touch the terminal at all. If this sounds like something you could help with, please open an issue or reach out.
-- **UI improvements and accessibility**
-- **Support for more immich-go flags**
-- **Testing across different setups**
+**What does “assets did not reach a final state” mean?**
 
-Even if you just find a bug or have a feature idea, opening an issue is a huge help. Before contributing code, open an issue to agree on contribution licensing, including any permission needed for separate commercial licensing.
+The run needs review. Check the final summary, log, and Immich library before calling it complete. Log review can help you find issues, but does not prove success or failure on its own.
 
----
+## Contributing
+
+[Open an issue](https://github.com/blickoneblickytwo/immich-go-desktop/issues) for bugs, feature ideas, accessibility feedback, or testing results. Useful reports include your source type, OS/shell, and immich-go version. Remove keys, private addresses, and personal paths from anything you share.
+
+Before contributing code, open an issue to agree on contribution licensing, including any permission needed for separate commercial licensing. Standalone desktop packaging and testing across more setups are welcome areas for contributions. See the [changelog](CHANGELOG.md) for recent work.
 
 ## License
 

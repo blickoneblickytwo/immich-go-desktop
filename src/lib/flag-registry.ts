@@ -7,8 +7,8 @@
  * - immich-go upload from-google-photos --help
  * - immich-go upload from-immich --help
  * - immich-go upload from-icloud --help
- * Advanced options checked against tagged documentation/source on 2026-10-16.
- * See IMMICH_GO_BASELINE.md for the remaining v0.32.0 binary-capture limitation.
+ * Advanced options checked against the checksum-verified official v0.32.0 binary
+ * and tagged source on 2026-10-17. See IMMICH_GO_BASELINE.md for captures/scope.
  */
 
 export type UploadSource = "folder" | "takeout" | "immich" | "icloud";

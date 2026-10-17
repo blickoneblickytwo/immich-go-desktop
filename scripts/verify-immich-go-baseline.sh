@@ -11,13 +11,33 @@ if ! command -v "$BIN_PATH" >/dev/null 2>&1 && [ ! -x "$BIN_PATH" ]; then
   exit 1
 fi
 
-mkdir -p "$OUT_DIR"
+# Capture help only: no server connection or import. Sanitize before writing;
+# immich-go includes the current computer's hostname in its device UUID default.
+python3 - "$BIN_PATH" "$OUT_DIR" <<'PY'
+from pathlib import Path
+import re
+import subprocess
+import sys
 
-"$BIN_PATH" version > "$OUT_DIR/version.txt"
-"$BIN_PATH" upload from-folder --help > "$OUT_DIR/upload-from-folder.help.txt"
-"$BIN_PATH" upload from-google-photos --help > "$OUT_DIR/upload-from-google-photos.help.txt"
+binary, output = sys.argv[1:]
+captures = {"version.txt": ["version"]}
+for source in ("from-folder", "from-google-photos", "from-icloud", "from-immich"):
+    captures[f"upload-{source}.help.txt"] = ["upload", source, "--help"]
 
-printf 'Wrote verification artifacts to %s\n' "$OUT_DIR"
-printf '  - %s\n' "$OUT_DIR/version.txt"
-printf '  - %s\n' "$OUT_DIR/upload-from-folder.help.txt"
-printf '  - %s\n' "$OUT_DIR/upload-from-google-photos.help.txt"
+sanitized = {}
+for name, args in captures.items():
+    result = subprocess.run([binary, *args], capture_output=True, text=True)
+    if result.returncode:
+        raise SystemExit(f"Verification failed for {name}; no captures written.")
+    text = re.sub(r'(--(?:from-)?device-uuid[^\n]*?) \(default "[^"\n]*"\)',
+                  r'\1 (default "<local-device>")', result.stdout)
+    for path in (str(Path.cwd()), str(Path.home())):
+        text = text.replace(path, "<local-path>")
+    sanitized[name] = text
+
+folder = Path(output)
+folder.mkdir(parents=True, exist_ok=True)
+for name, text in sanitized.items():
+    (folder / name).write_text(text)
+print(f"Wrote {len(sanitized)} sanitized verification artifacts to {folder}")
+PY

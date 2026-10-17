@@ -1,0 +1,318 @@
+{
+  "checked_on": "2026-10-17",
+  "release": "v0.32.0",
+  "release_url": "https://github.com/simulot/immich-go/releases/tag/v0.32.0",
+  "asset": "immich-go_Darwin_arm64.tar.gz",
+  "archive_sha256": "0c1ce06932a21a738d9adaf2ddafdbf654113fc2791d31b6d2ea0044928e2f43",
+  "checksum_verified_against": [
+    "GitHub release asset SHA-256 metadata",
+    "release checksums.txt"
+  ],
+  "method": "Version and help captures; flag parsing with --help only. No server request, photo import, or runtime semantics test. Device defaults in help sanitized before saving.",
+  "checks": [
+    {
+      "source": "from-folder",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--into-album=Example album",
+        "--folder-as-album=FOLDER",
+        "--manage-burst=NoStack",
+        "--manage-heic-jpeg=NoStack"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--into-album=Example album",
+        "--folder-as-album=FOLDER",
+        "--manage-burst=NoStack",
+        "--manage-heic-jpeg=StackCoverHeic"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--into-album=Example album",
+        "--folder-as-album=FOLDER",
+        "--manage-burst=NoStack",
+        "--manage-heic-jpeg=StackCoverJPG"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--into-album=Example album",
+        "--folder-as-album=FOLDER",
+        "--manage-burst=Stack",
+        "--manage-heic-jpeg=NoStack"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--into-album=Example album",
+        "--folder-as-album=FOLDER",
+        "--manage-burst=Stack",
+        "--manage-heic-jpeg=StackCoverHeic"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--into-album=Example album",
+        "--folder-as-album=FOLDER",
+        "--manage-burst=Stack",
+        "--manage-heic-jpeg=StackCoverJPG"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-google-photos",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-album-name=Example album",
+        "--sync-albums=false",
+        "--manage-burst=NoStack",
+        "--manage-heic-jpeg=NoStack"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-google-photos",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-album-name=Example album",
+        "--sync-albums=false",
+        "--manage-burst=NoStack",
+        "--manage-heic-jpeg=StackCoverHeic"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-google-photos",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-album-name=Example album",
+        "--sync-albums=false",
+        "--manage-burst=NoStack",
+        "--manage-heic-jpeg=StackCoverJPG"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-google-photos",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-album-name=Example album",
+        "--sync-albums=false",
+        "--manage-burst=Stack",
+        "--manage-heic-jpeg=NoStack"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-google-photos",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-album-name=Example album",
+        "--sync-albums=false",
+        "--manage-burst=Stack",
+        "--manage-heic-jpeg=StackCoverHeic"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-google-photos",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-album-name=Example album",
+        "--sync-albums=false",
+        "--manage-burst=Stack",
+        "--manage-heic-jpeg=StackCoverJPG"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-icloud",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--date-range=2024-01-01,2024-12-31",
+        "--manage-raw-jpeg=StackCoverJPG",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--memories=true"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-immich",
+      "flags": [
+        "--time-zone=Europe/London",
+        "--session-tag",
+        "--concurrent-tasks=3",
+        "--client-timeout=90m",
+        "--tag=Example import",
+        "--dry-run",
+        "--on-errors=continue",
+        "--pause-immich-jobs=false",
+        "--from-date-range=2024-01-01,2024-12-31"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--concurrent-tasks=1",
+        "--client-timeout=1m"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--concurrent-tasks=1",
+        "--client-timeout=1440m"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--concurrent-tasks=20",
+        "--client-timeout=1m"
+      ],
+      "help_parse_passed": true
+    },
+    {
+      "source": "from-folder",
+      "flags": [
+        "--concurrent-tasks=20",
+        "--client-timeout=1440m"
+      ],
+      "help_parse_passed": true
+    }
+  ]
+}
