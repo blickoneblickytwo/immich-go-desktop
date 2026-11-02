@@ -4,13 +4,28 @@
 [![Open app](https://img.shields.io/badge/Open-App-brightgreen)](https://blickoneblickytwo.github.io/immich-go-desktop/)
 [![immich-go v0.32.0 checked](https://img.shields.io/badge/immich--go-v0.32.0%20checked-blue)](IMMICH_GO_BASELINE.md)
 
-**Prepare a guided photo import in four simple steps.** Bring a photo folder, Google Photos Takeout, Apple iCloud export, or another Immich library into your own Immich server.
+**A simpler starting point for your first Immich photo import.** Go Desktop helps you prepare immich-go without having to assemble its command-line options yourself. Bring a photo folder, Google Photos Takeout, Apple iCloud export, or another Immich library into your own Immich server.
 
 [Open the app](https://blickoneblickytwo.github.io/immich-go-desktop/) · [Report a problem or suggest a feature](https://github.com/blickoneblickytwo/immich-go-desktop/issues) · [What's new](CHANGELOG.md)
 
-The app builds a script for you to run in a terminal. It sets up immich-go if needed, asks for your keys, and runs a test before asking whether to upload. **The web page does not upload your photos or run the script itself.** A standalone desktop package is not included. Experienced users can still copy a manual command.
+Choose your source → enter your server → choose your options → download a guided script.
 
-> Screenshots show the revision in this repository. The hosted app may differ until that revision is deployed. All screenshots use example details; the log sample is synthetic.
+The script sets up immich-go if needed, asks for your keys, and runs a test before asking whether to upload. **You still launch the download in Terminal or PowerShell.** The web page does not run imports or show live terminal progress. Despite the project name, this revision is a browser app, not an installable desktop app. Experienced users can still copy a manual command.
+
+> **Update preview:** the screenshots and features below describe the unreleased revision in this repository. The published app may differ until this revision is deployed. All screenshots use example details; the log sample is synthetic.
+
+[Follow the screenshot guide](#your-first-import-screen-by-screen) · [Review an import log](#optional-understand-an-import-log) · [Read about privacy](#settings-and-privacy)
+
+## What's new in this revision
+
+| Improvement | What it helps you do |
+| --- | --- |
+| Guided immich-go setup | Use a compatible installed copy or let the script download and checksum-verify its pinned copy. No separate manual installation on supported platforms. |
+| Test before uploading | Review the test output, then type `UPLOAD` to begin. Press Enter to stop after the test. Problematic tests stop before the upload prompt. |
+| Clearer results | Open a saved import log in the browser to see reported counts, warnings, and errors. Missing counts stay Unknown. |
+| A quieter interface | Follow four screens, with optional Advanced controls and help tucked away until needed. |
+
+The guided download leaves out keys entered in the browser and asks for them locally when run. A test skips photo uploads but still contacts your server; it does not prove that every photo will import successfully. Read the [privacy details](#settings-and-privacy) before running a script or sharing logs.
 
 ## Before you start
 
@@ -71,6 +86,14 @@ Adjust the path if you saved the script elsewhere. Windows script policies may b
 The script checks the photo path, uses a compatible installed immich-go or downloads and checksum-verifies its own copy, then asks for your destination key (and source key for migration). It checks each server's version response and runs a test. HTTP addresses need explicit acknowledgement before sending a key.
 
 **After the test:** review the output and warnings. Type **UPLOAD** only when ready to upload using these settings, or press Enter to stop after the test. A failed, incomplete, empty, or problematic test stops before this prompt. Every invocation tests first, including a download generated from a live preset. The script prints reported counts and the exact saved log folder; check your library and keep your original photos/export files while reviewing results.
+
+**What happens after you launch the download?**
+
+The following illustration shows excerpts from the script's prompts: setup and hidden key input, test results, then your choice to upload or stop. This happens in Terminal or PowerShell, separately from the browser. **It is illustrative sample output, not a real photo import.** The log path is fictional; actual messages and counts vary.
+
+<img src="screenshots/design-revision/process/05-terminal-example.png" width="760" alt="Illustrative sample, not a real import: terminal excerpts show immich-go setup and hidden API-key input, test results with an Unknown upload count, and the UPLOAD-or-Enter confirmation prompt with no answer entered." />
+
+Paste your key when prompted even though its characters do not appear. After reviewing the test, type **UPLOAD** exactly and press Enter to begin importing, or press Enter on its own to stop. Reported counts do not confirm that your library is complete. Keep your original photos and review the saved log and Immich library afterward.
 
 <details>
 <summary>Already have immich-go installed? Use a manual command</summary>
@@ -167,9 +190,17 @@ npm run build
 
 ## Common questions
 
+**Do I need to know terminal commands?**
+
+You do not need to build an immich-go command yourself. The final screen gives you a guided download and its launch command. You still need to open Terminal or PowerShell, run that command, and follow the prompts. See [step 4](#4-download-your-guided-script-and-run-it).
+
 **Do I still need immich-go?**
 
 The import still uses immich-go, but the guided script sets up the pinned version if needed. Manual commands require your own compatible installation.
+
+**Can I watch the import inside the browser?**
+
+Not in this revision. Progress appears in the Terminal or PowerShell window running the script. Afterward, you can [open a saved log](#optional-understand-an-import-log) for a more readable report. Native desktop packaging and live in-app progress are future possibilities, not included features.
 
 **Where should I put my photos?**
 
@@ -188,6 +219,8 @@ Double-check the address, HTTPS setup, key, and browser access. You can continue
 The run needs review. Check the final summary, log, and Immich library before calling it complete. Log review can help you find issues, but does not prove success or failure on its own.
 
 ## Contributing
+
+Thank you to everyone who has tried the app, starred the project, or shared feedback. Questions about setup, API keys, connection tests, and import results help shape these improvements. The goal is to make a first import easier to understand while keeping the main flow minimal.
 
 [Open an issue](https://github.com/blickoneblickytwo/immich-go-desktop/issues) for bugs, feature ideas, accessibility feedback, or testing results. Useful reports include your source type, OS/shell, and immich-go version. Remove keys, private addresses, and personal paths from anything you share.
 

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>After launching the script · illustrative sample</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f5f4f2; color: #262421; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 960px; margin: auto; padding: 36px; }
+      .sample { display: inline-block; margin-bottom: 16px; padding: 7px 11px; border: 1px solid #ddd6cb; border-radius: 99px; background: #ede8df; color: #665b4a; font-size: 12px; font-weight: 600; letter-spacing: .03em; }
+      h1 { margin: 0 0 10px; font-size: 32px; font-weight: 600; letter-spacing: -.04em; }
+      .intro, .note { margin: 0; color: #6c655e; font-size: 15px; line-height: 1.6; }
+      .intro { max-width: 780px; margin-bottom: 26px; }
+      section { margin-top: 18px; }
+      h2 { margin: 0 0 9px; font-size: 17px; font-weight: 600; }
+      .terminal { padding: 19px 22px; border: 1px solid #393734; border-radius: 12px; background: #252422; color: #f0ece6; }
+      pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 15px/1.7 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+      .note { margin-top: 9px; font-size: 14px; }
+      .decision { border-color: #81715e; }
+      footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd8d1; color: #6c655e; font-size: 13px; line-height: 1.6; }
+      @media (max-width: 600px) { main { padding: 24px 18px; } h1 { font-size: 27px; } pre { font-size: 13px; } .terminal { padding: 16px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="sample">ILLUSTRATIVE SAMPLE · NO REAL IMPORT</span>
+      <h1>After you run the download</h1>
+      <p class="intro">These excerpts show what to expect in Terminal or PowerShell. The browser stays separate. Actual output varies; the log path below is fictional.</p>
+
+      <section>
+        <h2>1. Setup and your API key</h2>
+        <div class="terminal"><pre>Go Desktop - guided import
+Always tests first. Uploading requires typing UPLOAD.
+Photo path checked. Individual files will be checked by the test run.
+Downloading official immich-go v0.32.0 (no system installation changes)...
+Using immich-go v0.32.0.
+Destination API key (input hidden):</pre></div>
+        <p class="note">A compatible installed copy skips the download. Paste your key when asked; its characters do not appear.</p>
+      </section>
+
+      <section>
+        <h2>2. Read the test results</h2>
+        <div class="terminal"><pre>test log: /example/go-desktop/imports/run-sample/test.log
+Reported uploads: Unknown | Skipped/discarded: 0 | Asset errors: 0 | Pending: 0
+Error messages: 0 | Warnings: 0
+Reported counts do not verify that your Immich library is complete.
+
+Test finished. Its counts do not mean photos were uploaded. Review warnings above.</pre></div>
+        <p class="note">The test skips photo uploads but contacts your server. Missing counts stay Unknown. A failed or problematic test stops before the next prompt.</p>
+      </section>
+
+      <section>
+        <h2>3. You choose whether to upload</h2>
+        <div class="terminal decision"><pre>Upload using these settings now? Type UPLOAD to start; Enter stops:</pre></div>
+        <p class="note">Type UPLOAD exactly and press Enter only when ready. Press Enter on its own to finish after the test. No response has been entered in this example.</p>
+      </section>
+
+      <footer>Illustration based on the guided script's prompts, not a captured photo import. Excerpts omit intermediate CLI output. Logs can contain keys and private details; keep them private.</footer>
+    </main>
+  </body>
+</html>
