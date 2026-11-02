@@ -1,6 +1,6 @@
 import unixTemplate from "./guided-import.sh?raw";
 import windowsTemplate from "./guided-import.ps1?raw";
-import { getRawFlagPreview, type FriendlyState } from "./friendly-flow";
+import { getRawFlagPreview, quotePowerShell, type FriendlyState } from "./friendly-flow";
 import { parseServerUrl } from "./connection";
 import { hasControlCharacters } from "./utils";
 import type { DetectedOS } from "./os";
@@ -18,18 +18,20 @@ export const GUIDED_ASSETS = {
 
 export function buildGuidedScript(state: FriendlyState, os: DetectedOS) {
   if (!state.source) throw new Error("Choose an import source first.");
-  parseServerUrl(state.serverUrl);
-  if (state.source === "immich") parseServerUrl(state.fromServerUrl);
+  // Scripts receive the parsed form, so their scheme checks and requests see the validated host.
+  const normalize = (value: string) => parseServerUrl(value).href.replace(/\/+$/, "");
+  const destination = normalize(state.serverUrl);
+  const sourceServer = state.source === "immich" ? normalize(state.fromServerUrl) : "";
   const path = state.source === "immich" ? "" : state.inputPath.trim();
   if (state.source !== "immich" && (!path || path.startsWith("-"))) throw new Error("Enter a full photo path first.");
   const flags = getRawFlagPreview(state).filter(flag => !flag.startsWith("--dry-run"));
-  const values = [state.serverUrl.trim(), state.fromServerUrl.trim(), path, ...flags];
+  const values = [destination, sourceServer, path, ...flags];
   if (values.some(hasControlCharacters)) throw new Error("Remove line breaks and control characters from the import settings.");
   const windows = os === "windows";
-  const quote = (text: string) => windows ? `'${text.replace(/'/g, "''")}'` : `'${text.replace(/'/g, "'\\''")}'`;
+  const quote = (text: string) => windows ? quotePowerShell(text) : `'${text.replace(/'/g, "'\\''")}'`;
   const config = windows
-    ? `$Destination = ${quote(state.serverUrl.trim())}\n$SourceServer = ${quote(state.source === "immich" ? state.fromServerUrl.trim() : "")}\n$PhotoPath = ${quote(path)}\n$Source = ${quote(state.source)}\n$ImportFlags = @(${flags.map(quote).join(", ")})`
-    : `destination=${quote(state.serverUrl.trim())}\nsource_server=${quote(state.source === "immich" ? state.fromServerUrl.trim() : "")}\nphoto_path=${quote(path)}\nsource=${quote(state.source)}\nimport_flags=(${flags.map(quote).join(" ")})`;
+    ? `$Destination = ${quote(destination)}\n$SourceServer = ${quote(sourceServer)}\n$PhotoPath = ${quote(path)}\n$Source = ${quote(state.source)}\n$ImportFlags = @(${flags.map(quote).join(", ")})`
+    : `destination=${quote(destination)}\nsource_server=${quote(sourceServer)}\nphoto_path=${quote(path)}\nsource=${quote(state.source)}\nimport_flags=(${flags.map(quote).join(" ")})`;
   let script = windows ? windowsTemplate : unixTemplate;
   for (const [platform, digest] of Object.entries(GUIDED_ASSETS)) script = script.split(`@${platform}@`).join(digest);
   script = script.replace("# @CONFIG@", () => config);

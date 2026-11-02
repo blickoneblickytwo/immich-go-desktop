@@ -43,6 +43,10 @@ describe("destination test boundaries", () => {
   it("retains an explicitly selected HTTP address rather than pretending transport is encrypted", () => {
     expect(parseServerUrl("http://127.0.0.1:2283").protocol).toBe("http:");
   });
+
+  it.each(["http://127.0.0.1:1\\@127.0.0.2:2", "https://photos.example.com\\evil", "https://photos.example.com/@x"])("rejects %s, which other clients may resolve to a different host", (value) => {
+    expect(() => parseServerUrl(value)).toThrow("backslashes");
+  });
 });
 
 describe("saved connection boundaries", () => {
@@ -90,6 +94,11 @@ describe("command privacy and shell handling", () => {
   it("keeps PowerShell dollar expressions and apostrophes inside literal strings", () => {
     const command = buildFriendlyCommand({ ...state, apiKey: "don't$(Write-Output harmless-test)" }, "windows", "windows-powershell");
     expect(command).toContain("--api-key='don''t$(Write-Output harmless-test)'");
+  });
+
+  it("doubles curly and low single quotes, which PowerShell also treats as string delimiters", () => {
+    const command = buildFriendlyCommand({ ...state, source: "folder", inputPath:"C:\\Photos\\Mom\u2019s \u2018a\u2019 \u201Ab\u201B" }, "windows", "windows-powershell");
+    expect(command).toContain("'C:\\Photos\\Mom\u2019\u2019s \u2018\u2018a\u2019\u2019 \u201A\u201Ab\u201B\u201B'");
   });
 
   it.each(["contains%VARIABLE%", "contains!expansion!", 'contains"quote'])("blocks unsafe CMD interpolation instead of producing an executable export: %s", (apiKey) => {

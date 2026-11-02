@@ -97,7 +97,7 @@ printf 'Using immich-go v0.32.0.\n'
 # No redirect following for authenticated server requests. Keys stay out of curl argv.
 check_server() {
   local server=$1 label=$2 key='' status attempt=0
-  if [[ "$server" == http://* ]]; then
+  if [[ "$server" == [hH][tT][tT][pP]://* ]]; then
     confirm "$label uses HTTP, which sends the key without encryption. Type HTTP to continue:" HTTP || fail 'Stopped before sending the key. Use an HTTPS address in the app if available.'
   fi
   while [ "$attempt" -lt 3 ]; do

@@ -19,7 +19,7 @@ function Read-Key([string]$Label) {
     return $Plain
 }
 function Check-Server([string]$Address, [string]$Label) {
-    if ($Address.StartsWith('http://')) {
+    if ($Address.StartsWith('http://', [StringComparison]::OrdinalIgnoreCase)) {
         if (-not (Confirm-Exact "$Label uses HTTP, which sends the key without encryption. Type HTTP to continue" 'HTTP')) {
             throw 'Stopped before sending the key. Use HTTPS in the app if available.'
         }

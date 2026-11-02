@@ -124,6 +124,11 @@ export function sourceUsesPath(source: UploadSource | null): boolean {
   return source !== "immich";
 }
 
+/** PowerShell also ends single-quoted strings at curly/low single quotes, so double those too. */
+export function quotePowerShell(value: string): string {
+  return `'${value.replace(/['‘’‚‛]/g, "$&$&")}'`;
+}
+
 function shellQuote(value: string, shell: CommandShell): string {
   if (hasControlCharacters(value)) {
     throw new Error("Remove line breaks and control characters from your connection details, path, and options.");
@@ -134,7 +139,7 @@ function shellQuote(value: string, shell: CommandShell): string {
     if (/["%!]/.test(value)) throw new Error('For values containing %, !, or double quotes, choose PowerShell instead of CMD.');
     return `"${value.replace(/(\\+)$/, "$1$1")}"`;
   }
-  if (shell === "windows-powershell") return `'${value.replace(/'/g, "''")}'`;
+  if (shell === "windows-powershell") return quotePowerShell(value);
   if (!value) return "''";
   if (/^[a-zA-Z0-9_./:@=*-]+$/.test(value)) return value;
   return `'${value.replace(/'/g, "'\\''")}'`;

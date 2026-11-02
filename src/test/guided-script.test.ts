@@ -149,6 +149,13 @@ describe.skipIf(!hasPowerShell)("PowerShell guided script with isolated CLI/netw
     const r=fixture({scenario}).runPowerShell(["destination-key","UPLOAD"]);
     expect(r.status,r.output).not.toBe(0);expect(r.imports).toHaveLength(1);
   });
+  it.each(["C:\\Photos\\Mom\u2019s Photos","C:\\x\u2019; Write-Output INJECTED; \u2018y"])("keeps %s literal in the generated configuration",photoPath=>{
+    const config=buildGuidedScript({...state,inputPath:photoPath,serverUrl:"HTTPS://Photos.Example.com/"},"windows").content.replace(/^\uFEFF/,"").split("\n$Work = $null")[0];
+    const root=mkdtempSync(path.join(path.resolve("node_modules/.cache/guided-tests"),"quote-"));roots.push(root);
+    const file=path.join(root,"config.ps1");writeFileSync(file,config+"\nWrite-Output \"[$PhotoPath]\" \"[$Destination]\"\n");
+    const r=spawnSync(powerShellBinary,["-NoLogo","-NoProfile","-NonInteractive","-File",file],{encoding:"utf8",timeout:15000,env:{...process.env,POWERSHELL_TELEMETRY_OPTOUT:"1"}});
+    expect(r.status,r.stderr).toBe(0);expect(r.stdout.trim().split(/\r?\n/)).toEqual([`[${photoPath}]`,"[https://photos.example.com]"]);
+  },20000);
   it("blocks redirects and a non-Immich response before invoking the CLI",()=>{
     for(const options of [{status:"302"},{scenario:"html"}]) {
       const r=fixture(options).runPowerShell(["destination-key","UPLOAD"]);expect(r.status,r.output).not.toBe(0);expect(r.imports).toHaveLength(0);
@@ -197,6 +204,10 @@ describe.skipIf(process.platform==="win32")("Unix guided script with isolated CL
   });
   it("does not send a key over HTTP without explicit acknowledgement", () => {
     const r=fixture({server:"http://photos.example.com"}).run("\nfixture-key\nUPLOAD\n"); expect(r.imports).toHaveLength(0); expect(r.calls.filter(c=>c.kind==="curl")).toHaveLength(0);
+  });
+  it("requires the HTTP acknowledgement whatever the scheme's letter case", () => {
+    const f=fixture({server:"HTTP://photos.example.com"}); expect(f.script).toContain("destination='http://photos.example.com'");
+    const r=f.run("\nfixture-key\nUPLOAD\n"); expect(r.output).toContain("uses HTTP"); expect(r.imports).toHaveLength(0); expect(r.calls.filter(c=>c.kind==="curl")).toHaveLength(0);
   });
   it("stops at an invalid photo path before requesting a key or contacting a server", () => {
     const r=fixture({photoPath:"/example/missing"}).run("\n"); expect(r.calls).toHaveLength(0); expect(r.output).not.toContain("API key (input hidden)");

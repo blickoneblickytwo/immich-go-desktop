@@ -3,6 +3,8 @@ import { hasControlCharacters } from "@/lib/utils";
 /** Validate an Immich base URL without allowing credentials or query-string secrets. */
 export function parseServerUrl(value: string): URL {
   if (hasControlCharacters(value)) throw new Error("Remove control characters from the server address.");
+  // Browsers read "\" as "/", but curl and other clients may not, so the key could reach another host.
+  if (/[\\@]/.test(value)) throw new Error("Remove backslashes and @ from the server address.");
   let url: URL;
   try { url = new URL(value.trim()); } catch { throw new Error("Enter a complete http:// or https:// server address."); }
   if (!["http:", "https:"].includes(url.protocol)) throw new Error("Use an http:// or https:// server address.");
